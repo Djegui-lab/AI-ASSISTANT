@@ -95,55 +95,54 @@ if st.session_state.logged_in:
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
 
-# Configurations
-SCOPES = [
-    "https://www.googleapis.com/auth/drive.readonly",
-    "https://www.googleapis.com/auth/documents.readonly",
-]
-SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")  # Contenu JSON des credentials Google
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")  # Clé API Gemini
+    # Configurations
+    SCOPES = [
+        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/documents.readonly",
+    ]
+    SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")  # Contenu JSON des credentials Google
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")  # Clé API Gemini
 
-# Vérification des configurations Google
-if not SERVICE_ACCOUNT_JSON:
-    st.error(
-        "La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide."
-    )
-    st.stop()
+    # Vérification des configurations Google
+    if not SERVICE_ACCOUNT_JSON:
+        st.error(
+            "La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide."
+        )
+        st.stop()
 
-try:
-    # Charger les credentials depuis le contenu JSON
-    google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
-    credentials = service_account.Credentials.from_service_account_info(
-        google_credentials, scopes=SCOPES
-    )
-    # Initialiser les services Google Drive et Docs
-    drive_service = build("drive", "v3", credentials=credentials)
-    docs_service = build("docs", "v1", credentials=credentials)
-    st.success("Services Google Drive et Docs initialisés avec succès !")
-except json.JSONDecodeError:
-    st.error(
-        "Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide."
-    )
-    st.stop()
-except Exception as e:
-    st.error(f"Erreur lors de l'initialisation des services Google : {e}")
-    st.stop()
+    try:
+        # Charger les credentials depuis le contenu JSON
+        google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
+        credentials = service_account.Credentials.from_service_account_info(
+            google_credentials, scopes=SCOPES
+        )
+        # Initialiser les services Google Drive et Docs
+        drive_service = build("drive", "v3", credentials=credentials)
+        docs_service = build("docs", "v1", credentials=credentials)
+        st.success("Services Google Drive et Docs initialisés avec succès !")
+    except json.JSONDecodeError:
+        st.error(
+            "Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide."
+        )
+        st.stop()
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation des services Google : {e}")
+        st.stop()
 
-# Vérification de la clé API Gemini
-if not GEMINI_API_KEY:
-    st.error(
-        "La clé API Gemini n'est pas configurée. Assurez-vous que la variable d'environnement 'GEMINI_API_KEY' est définie."
-    )
-    st.stop()
+    # Vérification de la clé API Gemini
+    if not GEMINI_API_KEY:
+        st.error(
+            "La clé API Gemini n'est pas configurée. Assurez-vous que la variable d'environnement 'GEMINI_API_KEY' est définie."
+        )
+        st.stop()
 
-# Initialisation de Gemini
-try:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    st.success("Gemini initialisé avec succès !")
-except Exception as e:
-    st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
-    st.stop()
-
+    # Initialisation de Gemini
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        st.success("Gemini initialisé avec succès !")
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
+        st.stop()
 
     # Fonction pour lister les fichiers dans un dossier Google Drive
     def list_files_in_folder(folder_id):
