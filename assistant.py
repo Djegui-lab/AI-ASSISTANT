@@ -10,13 +10,13 @@ import os
 
 # Initialisation de Firebase Admin SDK
 firebase_json_path = os.environ.get("firebasejson")  # Chemin du fichier JSON Firebase
-if not os.path.exists(firebase_credentials_path):
-    st.error(f"Le fichier {firebase_credentials_path} n'existe pas.")
+if not os.path.exists(firebase_json_path):
+    st.error(f"Le fichier {firebase_json_path} n'existe pas.")
 else:
     try:
         # Initialiser Firebase avec le fichier JSON
         if not firebase_admin._apps:
-            cred = credentials.Certificate(firebase_credentials_path)
+            cred = credentials.Certificate(firebase_json_path)
             firebase_admin.initialize_app(cred)
             st.success("Firebase initialisé avec succès !")
     except Exception as e:
