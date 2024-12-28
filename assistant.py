@@ -7,7 +7,7 @@ from google.oauth2 import service_account
 from google import genai
 
 # Initialisation de Firebase Admin SDK
-firebase_json_path = os.environ.get("FIRE_BASE_APPLICATION_CREDENTIALS_JSON")  # Fichier JSON dans le même répertoire
+firebase_json_path = os.environ.get("FIREBASE_CREDENTIALS")  # Fichier JSON dans le même répertoire
 if not firebase_admin._apps:
     cred = credentials.Certificate(firebase_json_path)
     firebase_admin.initialize_app(cred)
