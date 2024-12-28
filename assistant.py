@@ -59,7 +59,107 @@ def logout():
 st.markdown(
     """
     <style>
-    /* Ajoutez votre CSS ici */
+    /* Style général pour les boutons */
+    .stButton button {
+        background-color: #4CAF50;  /* Vert */
+        color: white;
+        border-radius: 12px;  /* Coins plus arrondis */
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stButton button:hover {
+        background-color: #45a049;  /* Vert plus foncé au survol */
+        transform: scale(1.05);  /* Effet de zoom */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée */
+    }
+    .stButton button:active {
+        background-color: #367c39;  /* Vert encore plus foncé au clic */
+        transform: scale(0.95);  /* Effet de pression */
+    }
+
+    /* Style pour les champs de texte */
+    .stTextInput input {
+        border-radius: 12px;  /* Coins plus arrondis */
+        padding: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background-color: #f9f9f9;  /* Fond légèrement gris */
+    }
+    .stTextInput input:focus {
+        border-color: #4CAF50;  /* Bordure verte lors de la sélection */
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);  /* Ombre verte plus large */
+        outline: none;
+        background-color: white;  /* Fond blanc lors de la sélection */
+    }
+
+    /* Style pour les titres */
+    .centered-title {
+        text-align: center;
+        font-size: 42px;
+        font-weight: bold;
+        color: #2E86C1;  /* Bleu */
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .centered-title:hover {
+        color: #1c5a7a;  /* Bleu plus foncé au survol */
+        transform: scale(1.02);  /* Légère augmentation de la taille */
+    }
+
+    /* Style pour le texte */
+    .centered-text {
+        text-align: center;
+        font-size: 18px;
+        color: #4CAF50;  /* Vert */
+        margin-bottom: 30px;
+        transition: all 0.3s ease;
+    }
+    .centered-text:hover {
+        color: #367c39;  /* Vert plus foncé au survol */
+    }
+
+    /* Style pour le fond de la page */
+    .stApp {
+        background: linear-gradient(135deg, #f0f2f6, #e6f7ff);  /* Dégradé de fond */
+        padding: 20px;
+    }
+
+    /* Style pour les messages de succès */
+    .stSuccess {
+        background-color: #d4edda;  /* Fond vert clair */
+        color: #155724;  /* Texte vert foncé */
+        padding: 15px;
+        border-radius: 12px;  /* Coins plus arrondis */
+        border: 1px solid #c3e6cb;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stSuccess:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
+        transform: translateY(-2px);  /* Effet de levée */
+    }
+
+    /* Style pour les messages d'erreur */
+    .stError {
+        background-color: #f8d7da;  /* Fond rouge clair */
+        color: #721c24;  /* Texte rouge foncé */
+        padding: 15px;
+        border-radius: 12px;  /* Coins plus arrondis */
+        border: 1px solid #f5c6cb;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stError:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
+        transform: translateY(-2px);  /* Effet de levée */
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -67,8 +167,11 @@ st.markdown(
 
 # Interface utilisateur avec onglets
 if not st.session_state.logged_in:
-    st.title("Application Streamlit avec Firebase Auth")
-    st.write("Connectez-vous ou inscrivez-vous pour accéder au contenu.")
+    # Titre centré et stylisé
+    st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
+
+    # Texte centré et stylisé
+    st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs(["Connexion", "Inscription"])
 
