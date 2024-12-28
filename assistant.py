@@ -7,23 +7,22 @@ from google.oauth2 import service_account
 from google import genai
 import os
 
-
 # Charger la configuration Firebase depuis une variable d'environnement
 firebase_json_content = os.environ.get("firebasejson")  # Contenu du fichier JSON
 if not firebase_json_content:
-    st.error("La variable d'environnement 'FIREBASE_CONFIG' n'est pas définie.")
+    st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
 else:
     try:
         # Charger la configuration JSON
-        firebase_config = json.loads(firebase_json_content)
+        firebasejson = json.loads(firebase_json_content)
         
         # Initialiser Firebase avec les données de configuration
         if not firebase_admin._apps:
-            cred = credentials.Certificate(firebase_config)
+            cred = credentials.Certificate(firebasejson)  # Passer le dictionnaire directement
             firebase_admin.initialize_app(cred)
             st.success("Firebase initialisé avec succès sur Heroku !")
     except json.JSONDecodeError:
-        st.error("Le contenu de 'FIREBASE_CONFIG' n'est pas un JSON valide.")
+        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
 
