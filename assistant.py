@@ -8,19 +8,24 @@ from google import genai
 import os
 
 
-# Initialisation de Firebase Admin SDK
-firebase_json_path = os.environ.get("firebasejson")  # Chemin du fichier JSON Firebase
-if not os.path.exists(firebase_json_path):
-    st.error(f"Le fichier {firebase_json_path} n'existe pas.")
+# Charger la configuration Firebase depuis une variable d'environnement
+firebase_json_content = os.environ.get("FIREBASE_CONFIG")  # Contenu du fichier JSON
+if not firebase_json_content:
+    st.error("La variable d'environnement 'FIREBASE_CONFIG' n'est pas définie.")
 else:
     try:
-        # Initialiser Firebase avec le fichier JSON
+        # Charger la configuration JSON
+        firebase_config = json.loads(firebase_json_content)
+        
+        # Initialiser Firebase avec les données de configuration
         if not firebase_admin._apps:
-            cred = credentials.Certificate(firebase_json_path)
+            cred = credentials.Certificate(firebase_config)
             firebase_admin.initialize_app(cred)
-            st.success("Firebase initialisé avec succès !")
+            st.success("Firebase initialisé avec succès sur Heroku !")
+    except json.JSONDecodeError:
+        st.error("Le contenu de 'FIREBASE_CONFIG' n'est pas un JSON valide.")
     except Exception as e:
-        st.error(f"Erreur lors de l'initialisation de Firebase : {e}")
+        st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
 
 # Gestion de l'état de l'utilisateur
 if "logged_in" not in st.session_state:
