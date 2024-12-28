@@ -1,7 +1,7 @@
 import json
 import firebase_admin
 from firebase_admin import credentials
-
+import os
 # JSON des credentials Firebase
 firebase_credentials = os.environ.get("firebasejson")
 
