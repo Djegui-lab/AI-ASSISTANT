@@ -9,7 +9,7 @@ import os
 
 
 # Charger la configuration Firebase depuis une variable d'environnement
-firebase_json_content = os.environ.get("FIREBASE_CONFIG")  # Contenu du fichier JSON
+firebase_json_content = os.environ.get("firebasejson")  # Contenu du fichier JSON
 if not firebase_json_content:
     st.error("La variable d'environnement 'FIREBASE_CONFIG' n'est pas définie.")
 else:
