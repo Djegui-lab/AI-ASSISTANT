@@ -275,7 +275,7 @@ if st.session_state.logged_in:
     # Configurations
     SERVICE_ACCOUNT_FILE = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
     SCOPES = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/documents.readonly"]
-    gemini_api_key = "AIzaSyDkp3DVEJR6XE24SbaJMTEm271ZFKKMHkc"  # Remplacez par votre clé API Gemini
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")   # Remplacez par votre clé API Gemini
 
     # Initialiser les services Google Drive et Docs
     credentials = service_account.Credentials.from_service_account_file(
