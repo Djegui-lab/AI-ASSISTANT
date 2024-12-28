@@ -6,6 +6,8 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google import genai
 import os
+import re
+import logging
 
 # Charger la configuration Firebase depuis une variable d'environnement
 firebase_json_content = os.environ.get("firebasejson")  # Contenu du fichier JSON
@@ -26,17 +28,129 @@ else:
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
 
+# Configuration de la journalisation
+logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
+
+# Charger la liste des e-mails autorisés depuis la variable d'environnement
+AUTHORIZED_EMAILS = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
+AUTHORIZED_EMAILS = [email.strip() for email in AUTHORIZED_EMAILS if email.strip()]
+
+# Fonction pour valider la complexité du mot de passe
+def validate_password(password):
+    """
+    Vérifie si le mot de passe respecte les exigences :
+    - Au moins une majuscule
+    - Au moins une minuscule
+    - Au moins un chiffre
+    - Longueur minimale de 8 caractères
+    """
+    errors = []
+    if len(password) < 8:
+        errors.append("Le mot de passe doit contenir au moins 8 caractères.")
+    if not re.search(r"[A-Z]", password):  # Vérifie une majuscule
+        errors.append("Le mot de passe doit contenir au moins une majuscule.")
+    if not re.search(r"[a-z]", password):  # Vérifie une minuscule
+        errors.append("Le mot de passe doit contenir au moins une minuscule.")
+    if not re.search(r"[0-9]", password):  # Vérifie un chiffre
+        errors.append("Le mot de passe doit contenir au moins un chiffre.")
+    return errors
+
+# Fonction pour valider l'e-mail
+def validate_email(email):
+    """
+    Vérifie si l'e-mail est valide.
+    """
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
+
+# Fonction pour l'inscription
+def signup(name, email, password, confirm_password):
+    try:
+        # Vérifier si l'e-mail est autorisé
+        if email not in AUTHORIZED_EMAILS:
+            st.error("Votre e-mail n'est pas autorisé à s'inscrire.")
+            logging.warning(f"Tentative d'inscription non autorisée avec l'e-mail : {email}")
+            return
+        
+        # Vérifier si l'e-mail est valide
+        if not validate_email(email):
+            st.error("L'e-mail n'est pas valide.")
+            return
+        
+        # Vérifier si les mots de passe correspondent
+        if password != confirm_password:
+            st.error("Les mots de passe ne correspondent pas.")
+            return
+        
+        # Vérifier la complexité du mot de passe
+        password_errors = validate_password(password)
+        if password_errors:
+            for error in password_errors:
+                st.error(error)
+            return
+        
+        # Créer l'utilisateur dans Firebase
+        user = auth.create_user(
+            email=email,
+            password=password,
+            display_name=name  # Ajouter le nom de l'utilisateur
+        )
+        st.success(f"Utilisateur {user.email} créé avec succès!")
+        logging.info(f"Utilisateur inscrit avec succès : {email}")
+    except auth.EmailAlreadyExistsError:
+        st.error("Cet e-mail est déjà utilisé.")
+        logging.warning(f"Tentative d'inscription avec un e-mail déjà utilisé : {email}")
+    except Exception as e:
+        st.error(f"Erreur: {e}")
+        logging.error(f"Erreur lors de l'inscription : {e}")
+
+# Fonction pour modifier le mot de passe
+def update_password(email, new_password, confirm_new_password):
+    try:
+        # Vérifier si les nouveaux mots de passe correspondent
+        if new_password != confirm_new_password:
+            st.error("Les nouveaux mots de passe ne correspondent pas.")
+            return
+        
+        # Vérifier la complexité du nouveau mot de passe
+        password_errors = validate_password(new_password)
+        if password_errors:
+            for error in password_errors:
+                st.error(error)
+            return
+        
+        # Récupérer l'utilisateur par e-mail
+        user = auth.get_user_by_email(email)
+        
+        # Mettre à jour le mot de passe
+        auth.update_user(user.uid, password=new_password)
+        st.success(f"Mot de passe de l'utilisateur {email} mis à jour avec succès!")
+        logging.info(f"Mot de passe mis à jour pour l'utilisateur : {email}")
+    except auth.UserNotFoundError:
+        st.error("Aucun utilisateur trouvé avec cet e-mail.")
+        logging.warning(f"Tentative de mise à jour du mot de passe pour un utilisateur inexistant : {email}")
+    except Exception as e:
+        st.error(f"Erreur: {e}")
+        logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
+
+# Fonction pour envoyer un lien de réinitialisation du mot de passe
+def send_password_reset_email(email):
+    try:
+        # Envoyer l'e-mail de réinitialisation
+        auth.generate_password_reset_link(email)
+        st.success(f"Un lien de réinitialisation a été envoyé à {email}. Vérifiez votre boîte de réception.")
+        logging.info(f"Lien de réinitialisation envoyé à : {email}")
+    except auth.UserNotFoundError:
+        st.error("Aucun utilisateur trouvé avec cet e-mail.")
+        logging.warning(f"Tentative de réinitialisation pour un utilisateur inexistant : {email}")
+    except Exception as e:
+        st.error(f"Erreur lors de l'envoi du lien de réinitialisation : {e}")
+        logging.error(f"Erreur lors de l'envoi du lien de réinitialisation : {e}")
+
 # Gestion de l'état de l'utilisateur
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user_email = None
-
-def signup(email, password):
-    try:
-        user = auth.create_user(email=email, password=password)
-        st.success(f"Utilisateur {user.email} créé avec succès!")
-    except Exception as e:
-        st.error(f"Erreur: {e}")
 
 def login(email, password):
     try:
@@ -184,16 +298,24 @@ if not st.session_state.logged_in:
 
     with tab2:
         st.subheader("Inscription")
+        name = st.text_input("Nom complet (inscription)", key="signup_name")
         new_email = st.text_input("Email (inscription)", key="signup_email")
         new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
+        confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password")
         if st.button("S'inscrire"):
-            signup(new_email, new_password)
+            signup(name, new_email, new_password, confirm_password)
 
 # Si l'utilisateur est connecté, affichez l'application principale
 if st.session_state.logged_in:
     st.success(f"Bienvenue, {st.session_state.user_email}!")
     if st.button("Se déconnecter"):
         logout()
+
+    # Section de modification du mot de passe
+    st.header("Modifier le mot de passe")
+    email_update = st.text_input("E-mail (modification du mot de passe)", value=st.session_state.user_email, disabled=True)
+    if st.button("Envoyer un lien de réinitialisation"):
+        send_password_reset_email(email_update)
 
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
