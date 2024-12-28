@@ -7,8 +7,11 @@ from google.oauth2 import service_account
 from google import genai
 
 # Initialisation de Firebase Admin SDK
-firebase_json_path = os.environ.get("FIREBASE_CREDENTIALS")  # Fichier JSON dans le même répertoire
+firebase_json_path = os.environ.get("FIREBASE_CREDENTIALS")  # Chemin du fichier JSON Firebase
 if not firebase_admin._apps:
+    if not firebase_json_path or not os.path.exists(firebase_json_path):
+        st.error("Le fichier de credentials Firebase est introuvable. Assurez-vous que la variable d'environnement 'FIREBASE_CREDENTIALS' est correctement configurée.")
+        st.stop()
     cred = credentials.Certificate(firebase_json_path)
     firebase_admin.initialize_app(cred)
 
@@ -45,197 +48,7 @@ def logout():
 st.markdown(
     """
     <style>
-    /* Style général pour les boutons */
-    .stButton button {
-        background-color: #4CAF50;  /* Vert */
-        color: white;
-        border-radius: 12px;  /* Coins plus arrondis */
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
-    }
-    .stButton button:hover {
-        background-color: #45a049;  /* Vert plus foncé au survol */
-        transform: scale(1.05);  /* Effet de zoom */
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée */
-    }
-    .stButton button:active {
-        background-color: #367c39;  /* Vert encore plus foncé au clic */
-        transform: scale(0.95);  /* Effet de pression */
-    }
-
-    /* Style pour les champs de texte */
-    .stTextInput input {
-        border-radius: 12px;  /* Coins plus arrondis */
-        padding: 12px;
-        border: 1px solid #ccc;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        background-color: #f9f9f9;  /* Fond légèrement gris */
-    }
-    .stTextInput input:focus {
-        border-color: #4CAF50;  /* Bordure verte lors de la sélection */
-        box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);  /* Ombre verte plus large */
-        outline: none;
-        background-color: white;  /* Fond blanc lors de la sélection */
-    }
-
-    /* Style pour les titres */
-    .stMarkdown h1 {
-        color: #2E86C1;  /* Bleu */
-        font-size: 42px;  /* Taille de police plus grande */
-        font-weight: bold;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-        text-align: center;  /* Centrer le titre */
-    }
-    .stMarkdown h1:hover {
-        color: #1c5a7a;  /* Bleu plus foncé au survol */
-        transform: scale(1.02);  /* Légère augmentation de la taille */
-    }
-
-    .stMarkdown h2 {
-        color: #D35400;  /* Orange */
-        font-size: 32px;  /* Taille de police plus grande */
-        font-weight: bold;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-        text-align: center;  /* Centrer le sous-titre */
-    }
-    .stMarkdown h2:hover {
-        color: #a84300;  /* Orange plus foncé au survol */
-        transform: scale(1.02);  /* Légère augmentation de la taille */
-    }
-
-    .stMarkdown h3 {
-        color: #4CAF50;  /* Vert */
-        font-size: 26px;  /* Taille de police plus grande */
-        font-weight: bold;
-        margin-bottom: 10px;
-        transition: all 0.3s ease;
-        text-align: center;  /* Centrer le sous-titre */
-    }
-    .stMarkdown h3:hover {
-        color: #367c39;  /* Vert plus foncé au survol */
-        transform: scale(1.02);  /* Légère augmentation de la taille */
-    }
-
-    /* Style pour le spinner (animation de chargement) */
-    .stSpinner {
-        color: #4CAF50;  /* Vert */
-    }
-
-    /* Style pour les messages de succès */
-    .stSuccess {
-        background-color: #d4edda;  /* Fond vert clair */
-        color: #155724;  /* Texte vert foncé */
-        padding: 15px;
-        border-radius: 12px;  /* Coins plus arrondis */
-        border: 1px solid #c3e6cb;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
-    }
-    .stSuccess:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
-        transform: translateY(-2px);  /* Effet de levée */
-    }
-
-    /* Style pour les messages d'erreur */
-    .stError {
-        background-color: #f8d7da;  /* Fond rouge clair */
-        color: #721c24;  /* Texte rouge foncé */
-        padding: 15px;
-        border-radius: 12px;  /* Coins plus arrondis */
-        border: 1px solid #f5c6cb;
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
-    }
-    .stError:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
-        transform: translateY(-2px);  /* Effet de levée */
-    }
-
-    /* Style pour les liens */
-    a {
-        color: #2E86C1;  /* Bleu */
-        text-decoration: none;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    a:hover {
-        color: #1c5a7a;  /* Bleu plus foncé au survol */
-        text-decoration: underline;  /* Soulignement au survol */
-    }
-
-    /* Style pour les conteneurs */
-    .stContainer {
-        background-color: white;
-        padding: 20px;
-        border-radius: 12px;  /* Coins plus arrondis */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Ombre légère */
-        margin-bottom: 20px;
-        transition: all 0.3s ease;
-    }
-    .stContainer:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
-        transform: translateY(-2px);  /* Effet de levée */
-    }
-
-    /* Style pour les séparateurs */
-    .stMarkdown hr {
-        border: 1px solid #e0e0e0;
-        margin: 20px 0;
-    }
-
-    /* Effet de rotation pour les icônes ou éléments spécifiques */
-    .rotate-on-hover {
-        transition: transform 0.3s ease;
-    }
-    .rotate-on-hover:hover {
-        transform: rotate(10deg);  /* Rotation de 10 degrés au survol */
-    }
-
-    /* Effet de fondu pour les éléments */
-    .fade-on-hover {
-        transition: opacity 0.3s ease;
-    }
-    .fade-on-hover:hover {
-        opacity: 0.8;  /* Légère transparence au survol */
-    }
-
-    /* Effet de gradient animé pour les boutons ou conteneurs */
-    .gradient-animation {
-        background: linear-gradient(90deg, #4CAF50, #2E86C1);
-        background-size: 200% auto;
-        transition: background-position 0.5s ease;
-    }
-    .gradient-animation:hover {
-        background-position: right center;  /* Animation du gradient au survol */
-    }
-
-    /* Style pour le fond de la page */
-    .stApp {
-        background: linear-gradient(135deg, #f0f2f6, #e6f7ff);  /* Dégradé de fond */
-        padding: 20px;
-    }
-
-    /* Style pour les cartes modernes */
-    .modern-card {
-        background-color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-    .modern-card:hover {
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        transform: translateY(-2px);
-    }
+    /* Ajoutez votre CSS ici */
     </style>
     """,
     unsafe_allow_html=True,
@@ -270,22 +83,37 @@ if st.session_state.logged_in:
 
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
-    
 
     # Configurations
-    SERVICE_ACCOUNT_FILE = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    SERVICE_ACCOUNT_FILE = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")  # Chemin du fichier JSON Google
     SCOPES = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/documents.readonly"]
-    gemini_api_key = os.environ.get("GEMINI_API_KEY")   # Remplacez par votre clé API Gemini
+    gemini_api_key = os.environ.get("GEMINI_API_KEY")  # Clé API Gemini
+
+    # Vérification des configurations
+    if not SERVICE_ACCOUNT_FILE or not os.path.exists(SERVICE_ACCOUNT_FILE):
+        st.error("Le fichier de credentials Google est introuvable. Assurez-vous que la variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est correctement configurée.")
+        st.stop()
+    if not gemini_api_key:
+        st.error("La clé API Gemini n'est pas configurée. Assurez-vous que la variable d'environnement 'GEMINI_API_KEY' est définie.")
+        st.stop()
 
     # Initialiser les services Google Drive et Docs
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
-    )
-    drive_service = build("drive", "v3", credentials=credentials)
-    docs_service = build("docs", "v1", credentials=credentials)
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=SCOPES
+        )
+        drive_service = build("drive", "v3", credentials=credentials)
+        docs_service = build("docs", "v1", credentials=credentials)
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation des services Google : {e}")
+        st.stop()
 
     # Initialiser Gemini
-    client = genai.Client(api_key=gemini_api_key)
+    try:
+        client = genai.Client(api_key=gemini_api_key)
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
+        st.stop()
 
     # Fonction pour lister les fichiers dans un dossier Google Drive
     def list_files_in_folder(folder_id):
@@ -314,7 +142,7 @@ if st.session_state.logged_in:
             return f"Erreur lors de la lecture du document Google Docs : {e}"
 
     # Fonction pour interroger Gemini avec l'historique des interactions
-    def query_gemini_with_history(docs_text, user_question, history, model= os.environ.get("KEY_API")):
+    def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
         try:
             # Ajoutez l'historique des interactions au prompt
             history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
