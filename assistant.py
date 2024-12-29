@@ -417,30 +417,37 @@ if st.session_state.logged_in:
 
     # Vérifiez si les documents ont déjà été chargés dans la session
     if "docs_text" not in st.session_state:
-        # Entrez l'ID du dossier Google Drive
-        folder_id = st.text_input("Entrez l'ID du dossier Google Drive :")
+        # Récupérer l'ID du dossier Google Drive depuis les variables d'environnement
+        folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
+        if not folder_id:
+            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie.")
+            st.stop()
+        
+        # Vérifiez si les documents ont déjà été chargés dans la session
+        if "docs_text" not in st.session_state:
+            if folder_id:
+                files = list_files_in_folder(folder_id)
+                if files:
+                    st.write("### Fichiers détectés :")
+                    docs_text = ""
+                    for file in files:
+                        if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
+                            #st.write(f"Lecture du document : {file['name']}")
+                            doc_text = get_google_doc_text(file["id"])
+                            docs_text += f"\n\n---\n\n{doc_text}"
+                        else:
+                            st.warning(f"Type de fichier non pris en charge : {file['name']}")
+                    
+                    if docs_text:
+                        st.session_state["docs_text"] = docs_text
+                        #st.success("Les documents ont été chargés.")
+                else:
+                    st.warning("Aucun fichier trouvé dans ce dossier.")
+        else:
+            st.success("Les documents sont déjà chargés et prêts à être utilisés.")
 
-        if folder_id:
-            files = list_files_in_folder(folder_id)
-            if files:
-                st.write("### Fichiers détectés :")
-                docs_text = ""
-                for file in files:
-                    if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
-                        #st.write(f"Lecture du document : {file['name']}")
-                        doc_text = get_google_doc_text(file["id"])
-                        docs_text += f"\n\n---\n\n{doc_text}"
-                    else:
-                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
-                
-                if docs_text:
-                    st.session_state["docs_text"] = docs_text
-                    st.success("Les documents ont été chargés.")
-            else:
-                st.warning("Aucun fichier trouvé dans ce dossier.")
-    else:
-        st.success("Les documents sont déjà chargés et prêts à être utilisés.")
 
+    
     # Posez une question
     if "docs_text" in st.session_state:
         user_question = st.text_input("Posez une question sur tous les documents :")
