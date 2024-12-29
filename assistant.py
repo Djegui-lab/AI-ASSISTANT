@@ -35,6 +35,11 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s 
 AUTHORIZED_EMAILS = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
 AUTHORIZED_EMAILS = [email.strip() for email in AUTHORIZED_EMAILS if email.strip()]
 
+# Charger le mot de passe depuis les variables d'environnement
+USER_PASSWORD = os.environ.get("USER_PASSWORD")
+if not USER_PASSWORD:
+    st.error("La variable d'environnement 'USER_PASSWORD' n'est pas définie.")
+
 # Fonction pour valider la complexité du mot de passe
 def validate_password(password):
     """
@@ -133,20 +138,6 @@ def update_password(email, new_password, confirm_new_password):
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
 
-# Fonction pour envoyer un lien de réinitialisation du mot de passe
-def send_password_reset_email(email):
-    try:
-        # Envoyer l'e-mail de réinitialisation
-        auth.generate_password_reset_link(email)
-        st.success(f"Un lien de réinitialisation a été envoyé à {email}. Vérifiez votre boîte de réception.")
-        logging.info(f"Lien de réinitialisation envoyé à : {email}")
-    except auth.UserNotFoundError:
-        st.error("Aucun utilisateur trouvé avec cet e-mail.")
-        logging.warning(f"Tentative de réinitialisation pour un utilisateur inexistant : {email}")
-    except Exception as e:
-        st.error(f"Erreur lors de l'envoi du lien de réinitialisation : {e}")
-        logging.error(f"Erreur lors de l'envoi du lien de réinitialisation : {e}")
-
 # Gestion de l'état de l'utilisateur
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -155,7 +146,7 @@ if "logged_in" not in st.session_state:
 def login(email, password):
     try:
         user = auth.get_user_by_email(email)
-        if user.email == email:  # Simulez une validation du mot de passe ici si nécessaire
+        if user.email == email and password == USER_PASSWORD:  # Validation du mot de passe
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success(f"Connecté en tant que {email}")
@@ -314,8 +305,10 @@ if st.session_state.logged_in:
     # Section de modification du mot de passe
     st.header("Modifier le mot de passe")
     email_update = st.text_input("E-mail (modification du mot de passe)", value=st.session_state.user_email, disabled=True)
-    if st.button("Envoyer un lien de réinitialisation"):
-        send_password_reset_email(email_update)
+    new_password = st.text_input("Nouveau mot de passe", type="password")
+    confirm_new_password = st.text_input("Confirmez le nouveau mot de passe", type="password")
+    if st.button("Mettre à jour le mot de passe"):
+        update_password(email_update, new_password, confirm_new_password)
 
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
@@ -364,7 +357,7 @@ if st.session_state.logged_in:
     # Initialisation de Gemini
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        st.success("Gemini initialisé avec succès !")
+        st.success("Assistant initialisé avec succès !")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
         st.stop()
@@ -434,7 +427,7 @@ if st.session_state.logged_in:
                 docs_text = ""
                 for file in files:
                     if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
-                        st.write(f"Lecture du document : {file['name']}")
+                        #st.write(f"Lecture du document : {file['name']}")
                         doc_text = get_google_doc_text(file["id"])
                         docs_text += f"\n\n---\n\n{doc_text}"
                     else:
