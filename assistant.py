@@ -2,9 +2,6 @@ import json
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
-from googleapiclient.discovery import build
-from google.oauth2 import service_account
-from google import genai
 import os
 import re
 import logging
