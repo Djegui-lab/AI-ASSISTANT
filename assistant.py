@@ -35,11 +35,6 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s 
 AUTHORIZED_EMAILS = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
 AUTHORIZED_EMAILS = [email.strip() for email in AUTHORIZED_EMAILS if email.strip()]
 
-# Charger le mot de passe depuis les variables d'environnement
-USER_PASSWORD = os.environ.get("USER_PASSWORD")
-if not USER_PASSWORD:
-    st.error("La variable d'environnement 'USER_PASSWORD' n'est pas définie.")
-
 # Fonction pour valider la complexité du mot de passe
 def validate_password(password):
     """
@@ -138,6 +133,7 @@ def update_password(email, new_password, confirm_new_password):
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
 
+
 # Gestion de l'état de l'utilisateur
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -146,7 +142,7 @@ if "logged_in" not in st.session_state:
 def login(email, password):
     try:
         user = auth.get_user_by_email(email)
-        if user.email == email and password == USER_PASSWORD:  # Validation du mot de passe
+        if user.email == email:  # Simulez une validation du mot de passe ici si nécessaire
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success(f"Connecté en tant que {email}")
@@ -303,12 +299,10 @@ if st.session_state.logged_in:
         logout()
 
     # Section de modification du mot de passe
-    st.header("Modifier le mot de passe")
-    email_update = st.text_input("E-mail (modification du mot de passe)", value=st.session_state.user_email, disabled=True)
-    new_password = st.text_input("Nouveau mot de passe", type="password")
-    confirm_new_password = st.text_input("Confirmez le nouveau mot de passe", type="password")
-    if st.button("Mettre à jour le mot de passe"):
-        update_password(email_update, new_password, confirm_new_password)
+    #st.header("Modifier le mot de passe")
+    #email_update = st.text_input("E-mail (modification du mot de passe)", value=st.session_state.user_email, disabled=True)
+    #if st.button("Envoyer un lien de réinitialisation"):
+        #send_password_reset_email(email_update)
 
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
@@ -337,7 +331,7 @@ if st.session_state.logged_in:
         # Initialiser les services Google Drive et Docs
         drive_service = build("drive", "v3", credentials=credentials)
         docs_service = build("docs", "v1", credentials=credentials)
-        st.success("Services Google Drive et Docs initialisés avec succès !")
+        #st.success("Services Google Drive et Docs initialisés avec succès !")
     except json.JSONDecodeError:
         st.error(
             "Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide."
@@ -357,7 +351,7 @@ if st.session_state.logged_in:
     # Initialisation de Gemini
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        st.success("Assistant initialisé avec succès !")
+        st.success("Assurbot initialisé avec succès !")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
         st.stop()
@@ -416,8 +410,7 @@ if st.session_state.logged_in:
         st.session_state["history"] = []
 
     # Vérifiez si les documents ont déjà été chargés dans la session
-    if "docs_text" not in st.session_state:
-        # Récupérer l'ID du dossier Google Drive depuis les variables d'environnement
+    if "docs_text" not in st.session_state:# Récupérer l'ID du dossier Google Drive depuis les variables d'environnement
         folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
         if not folder_id:
             st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie.")
@@ -428,7 +421,7 @@ if st.session_state.logged_in:
             if folder_id:
                 files = list_files_in_folder(folder_id)
                 if files:
-                    st.write("### Fichiers détectés :")
+                    st.write("### Compagnies détectés :")
                     docs_text = ""
                     for file in files:
                         if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
@@ -440,14 +433,13 @@ if st.session_state.logged_in:
                     
                     if docs_text:
                         st.session_state["docs_text"] = docs_text
-                        #st.success("Les documents ont été chargés.")
+                        st.success("Les documents ont été chargés.")
                 else:
                     st.warning("Aucun fichier trouvé dans ce dossier.")
         else:
             st.success("Les documents sont déjà chargés et prêts à être utilisés.")
+            
 
-
-    
     # Posez une question
     if "docs_text" in st.session_state:
         user_question = st.text_input("Posez une question sur tous les documents :")
