@@ -444,7 +444,7 @@ if st.session_state.logged_in:
     if "docs_text" in st.session_state:
         user_question = st.text_input("Posez une question sur tous les documents :")
         if st.button("Envoyer la question"):
-            with st.spinner("Interrogation de Assurbot..."):
+            with st.spinner("Interrogation 🤖Assurbot..."):
                 # Interroger Gemini avec l'historique
                 response = query_gemini_with_history(st.session_state["docs_text"], user_question, st.session_state["history"])
             
