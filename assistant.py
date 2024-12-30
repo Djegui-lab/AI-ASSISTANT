@@ -22,7 +22,7 @@ else:
         if not firebase_admin._apps:
             cred = credentials.Certificate(firebasejson)  # Passer le dictionnaire directement
             firebase_admin.initialize_app(cred)
-            st.success("Firebase initialisé avec succès sur Heroku !")
+            #st.success("Firebase initialisé avec succès sur Heroku !")
     except json.JSONDecodeError:
         st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
     except Exception as e:
@@ -351,7 +351,7 @@ if st.session_state.logged_in:
     # Initialisation de Gemini
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        st.success("Assurbot initialisé avec succès !")
+        st.success("Assurbot initialisé 🚀 avec succès !")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
         st.stop()
@@ -433,7 +433,7 @@ if st.session_state.logged_in:
                     
                     if docs_text:
                         st.session_state["docs_text"] = docs_text
-                        st.success("Les documents ont été chargés.")
+                        st.success("Service validation✅.")
                 else:
                     st.warning("Aucun fichier trouvé dans ce dossier.")
         else:
@@ -444,7 +444,7 @@ if st.session_state.logged_in:
     if "docs_text" in st.session_state:
         user_question = st.text_input("Posez une question sur tous les documents :")
         if st.button("Envoyer la question"):
-            with st.spinner("Interrogation de Gemini..."):
+            with st.spinner("Interrogation de Assurbot..."):
                 # Interroger Gemini avec l'historique
                 response = query_gemini_with_history(st.session_state["docs_text"], user_question, st.session_state["history"])
             
