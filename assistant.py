@@ -383,24 +383,57 @@ if st.session_state.logged_in:
         except Exception as e:
             return f"Erreur lors de la lecture du document Google Docs : {e}"
 
-    # Fonction pour interroger Gemini avec l'historique des interactions
-    def query_gemini_with_history(docs_text, user_question, history, model= os.environ.get("KEY_API")):
+        # Fonction pour interroger Gemini avec l'historique des interactions
+     def query_gemini_with_history(docs_text, user_question, history, model=os.environ.get("KEY_API")):
         try:
             # Ajoutez l'historique des interactions au prompt
             history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+            
+            # Créer le prompt générique
             prompt = f"""
-        Introduction et contexte :
-        Tu es 🤖Assurbot🤖, un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-
-        Voici l'historique des conversations précédentes :
-        {history_str}
-
-        Voici les contenus extraits des documents clients :
-
-        {docs_text}
-
-        Question : {user_question}
-        """
+    ### **Introduction et Contexte**
+    Tu es 🤖Assurbot🤖, un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+    
+    ### **Historique des Conversations**
+    Voici l'historique des conversations précédentes :
+    {history_str}
+    
+    ### **Contenu des Documents**
+    Voici les contenus extraits des documents clients :
+    {docs_text}
+    
+    ### **Question de l'Utilisateur**
+    Question : {user_question}
+    
+    ### **Instructions pour la Réponse**
+    1. **Organise la réponse en sections claires** (ex : Introduction, Analyse, Conclusion).
+    2. **Utilise des listes à puces** et des **emojis** pour mettre en évidence les informations importantes.
+    3. **Ajoute des exemples concrets** pour expliquer les termes techniques.
+    4. **Propose des conseils pratiques** pour aider l'utilisateur.
+    5. **Sois convivial et rassurant** dans ton ton.
+    6. **Résume les points clés** à la fin de la réponse.
+    7. **Propose des alternatives** si nécessaire.
+    """
+    
+            # Adapter le prompt en fonction du contexte
+            if "conditions de souscription" in user_question.lower():
+                prompt += """
+    ### **Instructions Spécifiques pour les Conditions de Souscription**
+    1. **Liste les critères d'acceptation et de refus** de manière claire.
+    2. **Explique les termes techniques** (ex : CRM, sinistralité) avec des exemples simples.
+    3. **Propose des conseils** pour améliorer l'éligibilité (ex : comment réduire son CRM).
+    4. **Résume les conditions** en quelques points clés.
+    """
+    
+            if "CRM" in user_question.lower():
+                prompt += """
+    ### **Exemple de CRM**
+    - **CRM de 0.50** : Vous bénéficiez d'une réduction de 50% sur votre prime d'assurance.
+    - **CRM de 1.20** : Vous payez 20% de plus que la prime de base.
+    - **Conseil** : Pour réduire votre CRM, évitez les sinistres responsables et suivez une formation de conduite.
+    """
+    
+            # Interroger Gemini
             response = client.models.generate_content(model=model, contents=prompt)
             return response.text.strip()
         except Exception as e:
