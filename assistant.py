@@ -351,7 +351,7 @@ if st.session_state.logged_in:
     # Initialisation de Gemini
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
-        st.success("Assurbot initialisé 🚀 avec succès !")
+        st.success("🤖 Assurbot initialisé 🚀 avec succès !")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Gemini : {e}")
         st.stop()
