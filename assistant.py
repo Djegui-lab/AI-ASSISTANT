@@ -266,6 +266,28 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Fonction pour interroger Gemini avec l'historique des interactions
+@lru_cache(maxsize=100)  # Cache jusqu'à 100 réponses
+def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
+    try:
+        # Limiter l'historique aux 5 dernières interactions
+        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[:5]])
+        prompt = f"""
+        Tu es 🤖Assurbot🤖, un assistant en assurance automobile. Ton objectif est de fournir des réponses claires et précises.
+
+        Historique des conversations :
+        {history_str}
+
+        Contenu des documents :
+        {docs_text}
+
+        Question : {user_question}
+        """
+        response = client.models.generate_content(model=model, contents=prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"Erreur lors de l'interrogation de Gemini : {e}"
+
 # Interface utilisateur avec onglets
 if not st.session_state.logged_in:
     # Titre centré et stylisé
@@ -403,28 +425,6 @@ if st.session_state.logged_in:
             return text_content.strip()
         except Exception as e:
             return f"Erreur lors de la lecture du document Google Docs : {e}"
-
-    # Fonction pour interroger Gemini avec l'historique des interactions
-    @lru_cache(maxsize=100)  # Cache jusqu'à 100 réponses
-    def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
-        try:
-            # Limiter l'historique aux 5 dernières interactions
-            history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[:5]])
-            prompt = f"""
-        Tu es 🤖Assurbot🤖, un assistant en assurance automobile. Ton objectif est de fournir des réponses claires et précises.
-
-        Historique des conversations :
-        {history_str}
-
-        Contenu des documents :
-        {docs_text}
-
-        Question : {user_question}
-        """
-            response = client.models.generate_content(model=model, contents=prompt)
-            return response.text.strip()
-        except Exception as e:
-            return f"Erreur lors de l'interrogation de Gemini : {e}"
 
     # Initialiser st.session_state["history"] si ce n'est pas déjà fait
     if "history" not in st.session_state:
