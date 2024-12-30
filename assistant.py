@@ -382,9 +382,9 @@ if st.session_state.logged_in:
             return text_content.strip()
         except Exception as e:
             return f"Erreur lors de la lecture du document Google Docs : {e}"
-
-        # Fonction pour interroger Gemini avec l'historique des interactions
-     def query_gemini_with_history(docs_text, user_question, history, model=os.environ.get("KEY_API")):
+    
+            # Fonction pour interroger Gemini avec l'historique des interactions
+    def query_gemini_with_history(docs_text, user_question, history, model=os.environ.get("KEY_API")):
         try:
             # Ajoutez l'historique des interactions au prompt
             history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
