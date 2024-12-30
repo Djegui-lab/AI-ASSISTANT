@@ -8,7 +8,6 @@ from google import genai
 import os
 import re
 import logging
-from functools import lru_cache  # Pour le cache des réponses
 
 # Charger la configuration Firebase depuis une variable d'environnement
 firebase_json_content = os.environ.get("firebasejson")  # Contenu du fichier JSON
@@ -133,6 +132,7 @@ def update_password(email, new_password, confirm_new_password):
     except Exception as e:
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
+
 
 # Gestion de l'état de l'utilisateur
 if "logged_in" not in st.session_state:
@@ -266,28 +266,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Fonction pour interroger Gemini avec l'historique des interactions
-@lru_cache(maxsize=100)  # Cache jusqu'à 100 réponses
-def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
-    try:
-        # Limiter l'historique aux 5 dernières interactions
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[:5]])
-        prompt = f"""
-        Tu es 🤖Assurbot🤖, un assistant en assurance automobile. Ton objectif est de fournir des réponses claires et précises.
-
-        Historique des conversations :
-        {history_str}
-
-        Contenu des documents :
-        {docs_text}
-
-        Question : {user_question}
-        """
-        response = client.models.generate_content(model=model, contents=prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"Erreur lors de l'interrogation de Gemini : {e}"
-
 # Interface utilisateur avec onglets
 if not st.session_state.logged_in:
     # Titre centré et stylisé
@@ -320,36 +298,15 @@ if st.session_state.logged_in:
     if st.button("Se déconnecter"):
         logout()
 
+    # Section de modification du mot de passe
+    #st.header("Modifier le mot de passe")
+    #email_update = st.text_input("E-mail (modification du mot de passe)", value=st.session_state.user_email, disabled=True)
+    #if st.button("Envoyer un lien de réinitialisation"):
+        #send_password_reset_email(email_update)
+
     # Votre application principale commence ici
     st.title("🚗 Assistant Courtier en Assurance Auto")
-
-    # Message d'accueil pour guider l'utilisateur
-    st.write("""
-    🤖 **Bienvenue sur l'Assistant Courtier en Assurance !**  
-    Je suis là pour vous aider à trouver les informations dont vous avez besoin.  
-    Pour commencer, posez-moi cette question :  
-    **"Combien de produits d'assurance proposez-vous ?"**  
-    Cela me permettra de mieux vous guider ensuite.
-    """)
-
-    # Bouton de suggestion pour poser la question automatiquement
-    if st.button("💡 Poser la première question pour moi"):
-        user_question = "Combien de produits d'assurance proposez-vous ?"
-        response = query_gemini_with_history(st.session_state["docs_text"], user_question, tuple(st.session_state["history"]))  # Convertir en tuple pour le cache
-        st.session_state["history"].insert(0, {"question": user_question, "response": response})
-        st.write(f"**Réponse :** {response}")
-
-    # Guider l'utilisateur après la réponse
-    if "history" in st.session_state and st.session_state["history"]:
-        last_interaction = st.session_state["history"][0]
-        if "Combien de produits d'assurance proposez-vous ?" in last_interaction["question"]:
-            st.write("""
-            🎉 **Merci d'avoir posé cette question !**  
-            Maintenant que je connais les produits disponibles, vous pouvez me demander :  
-            - "Quels sont les détails du produit [nom du produit] ?"  
-            - "Quelles sont les conditions d'éligibilité pour [nom du produit] ?"  
-            - "Comment souscrire à [nom du produit] ?"  
-            """)
+    
 
     # Configurations
     SCOPES = [
@@ -426,38 +383,63 @@ if st.session_state.logged_in:
         except Exception as e:
             return f"Erreur lors de la lecture du document Google Docs : {e}"
 
+    # Fonction pour interroger Gemini avec l'historique des interactions
+    def query_gemini_with_history(docs_text, user_question, history, model= os.environ.get("KEY_API")):
+        try:
+            # Ajoutez l'historique des interactions au prompt
+            history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+            prompt = f"""
+        Introduction et contexte :
+        Tu es 🤖Assurbot🤖, un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+
+        Voici l'historique des conversations précédentes :
+        {history_str}
+
+        Voici les contenus extraits des documents clients :
+
+        {docs_text}
+
+        Question : {user_question}
+        """
+            response = client.models.generate_content(model=model, contents=prompt)
+            return response.text.strip()
+        except Exception as e:
+            return f"Erreur lors de l'interrogation de Gemini : {e}"
+
     # Initialiser st.session_state["history"] si ce n'est pas déjà fait
     if "history" not in st.session_state:
         st.session_state["history"] = []
 
     # Vérifiez si les documents ont déjà été chargés dans la session
-    if "docs_text" not in st.session_state:
-        # Récupérer l'ID du dossier Google Drive depuis les variables d'environnement
+    if "docs_text" not in st.session_state:# Récupérer l'ID du dossier Google Drive depuis les variables d'environnement
         folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
         if not folder_id:
             st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie.")
             st.stop()
-
-        if folder_id:
-            files = list_files_in_folder(folder_id)
-            if files:
-                st.write("### Compagnies détectés :")
-                docs_text = ""
-                for file in files:
-                    if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
-                        #st.write(f"Lecture du document : {file['name']}")
-                        doc_text = get_google_doc_text(file["id"])
-                        docs_text += f"\n\n---\n\n{doc_text}"
-                    else:
-                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
-
-                if docs_text:
-                    st.session_state["docs_text"] = docs_text
-                    st.success("Service validation✅.")
-            else:
-                st.warning("Aucun fichier trouvé dans ce dossier.")
-    else:
-        st.success("Les documents sont déjà chargés et prêts à être utilisés.")
+        
+        # Vérifiez si les documents ont déjà été chargés dans la session
+        if "docs_text" not in st.session_state:
+            if folder_id:
+                files = list_files_in_folder(folder_id)
+                if files:
+                    st.write("### Compagnies détectés :")
+                    docs_text = ""
+                    for file in files:
+                        if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
+                            #st.write(f"Lecture du document : {file['name']}")
+                            doc_text = get_google_doc_text(file["id"])
+                            docs_text += f"\n\n---\n\n{doc_text}"
+                        else:
+                            st.warning(f"Type de fichier non pris en charge : {file['name']}")
+                    
+                    if docs_text:
+                        st.session_state["docs_text"] = docs_text
+                        st.success("Service validation✅.")
+                else:
+                    st.warning("Aucun fichier trouvé dans ce dossier.")
+        else:
+            st.success("Les documents sont déjà chargés et prêts à être utilisés.")
+            
 
     # Posez une question
     if "docs_text" in st.session_state:
@@ -465,8 +447,8 @@ if st.session_state.logged_in:
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
                 # Interroger Gemini avec l'historique
-                response = query_gemini_with_history(st.session_state["docs_text"], user_question, tuple(st.session_state["history"]))  # Convertir en tuple pour le cache
-
+                response = query_gemini_with_history(st.session_state["docs_text"], user_question, st.session_state["history"])
+            
             # Ajouter la question et la réponse à l'historique (en haut de la liste)
             st.session_state["history"].insert(0, {"question": user_question, "response": response})
 
