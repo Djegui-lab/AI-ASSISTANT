@@ -195,7 +195,7 @@ def is_thank_you(message):
     return message.lower().strip() in ["merci", "thank you", "thanks"]
 
 # Fonction pour interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
+def query_gemini_with_history(docs_text, user_question, history, model= os.environ.get("KEY_API")):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Gérer les salutations simples
@@ -232,7 +232,7 @@ def query_gemini_with_history(docs_text, user_question, history, model="gemini-p
 7. Propose des alternatives si nécessaire.
 """
         # Simuler une réponse de Gemini (remplacez par l'appel réel à l'API)
-        response = "Ceci est une réponse simulée de Gemini. 🚗"
+        response = client.models.generate_content(model=model, contents=prompt)
         return response.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
