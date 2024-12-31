@@ -215,7 +215,8 @@ def load_documents(folder_ids, drive_service, docs_service):
         for folder_id in folder_ids:
             files = list_files_in_folder(folder_id, drive_service)
             if files:
-                st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
+                #st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
+                st.write(f"Compagnies détectés 😊✨🕵️")
                 for file in files:
                     if file["mimeType"] == "application/vnd.google-apps.document":
                         doc_text = get_google_doc_text(file["id"], docs_service)
