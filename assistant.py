@@ -195,7 +195,7 @@ def is_thank_you(message):
     return message.lower().strip() in ["merci", "thank you", "thanks"]
 
 # Fonction pour interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, user_question, history, model= os.environ.get("KEY_API")):
+def query_gemini_with_history(client, docs_text, user_question, history, model="gemini-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Gérer les salutations simples
@@ -231,9 +231,9 @@ def query_gemini_with_history(docs_text, user_question, history, model= os.envir
 6. Résume les points clés à la fin de la réponse.
 7. Propose des alternatives si nécessaire.
 """
-        # Simuler une réponse de Gemini (remplacez par l'appel réel à l'API)
-        response = client.models.generate_content(model=model, contents=prompt)
-        return response.strip()
+        # Appel à l'API Gemini
+        response = client.generate_content(prompt, model=model)
+        return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
 
@@ -452,7 +452,7 @@ def main():
             user_question = st.text_input("Posez une question sur tous les documents :")
             if st.button("Envoyer la question"):
                 with st.spinner("Interrogation 🤖Assurbot..."):
-                    response = query_gemini_with_history(st.session_state.docs_text, user_question, st.session_state.history)
+                    response = query_gemini_with_history(client, st.session_state.docs_text, user_question, st.session_state.history)
                 st.session_state.history.insert(0, {"question": user_question, "response": response})
 
         if st.session_state.history:
