@@ -1,24 +1,24 @@
-import random
 import json
+import os
+import re
+import logging
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-from google.generativeai import GenerativeModel, configure  # Importez les bonnes bibliothèques
-import os
-import re
-import logging
+from google.generativeai import GenerativeModel, configure
+from google.api_core.exceptions import GoogleAPIError
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
 
-# Charger la configuration Firebase depuis une variable d'environnement
+# Initialisation de Firebase
 def initialize_firebase():
     """Initialise Firebase avec les données de configuration."""
-    firebase_json_content = os.environ.get("firebasejson")
+    firebase_json_content = os.environ.get("FIREBASE_JSON")
     if not firebase_json_content:
-        st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
+        st.error("La variable d'environnement 'FIREBASE_JSON' n'est pas définie.")
         return False
 
     try:
@@ -29,7 +29,7 @@ def initialize_firebase():
             logging.info("Firebase initialisé avec succès.")
         return True
     except json.JSONDecodeError:
-        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
+        st.error("Le contenu de 'FIREBASE_JSON' n'est pas un JSON valide.")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
     return False
@@ -40,7 +40,7 @@ def load_authorized_emails():
     authorized_emails = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
     return [email.strip() for email in authorized_emails if email.strip()]
 
-# Fonction pour valider la complexité du mot de passe
+# Valider la complexité du mot de passe
 def validate_password(password):
     """Valide la complexité du mot de passe."""
     errors = []
@@ -54,13 +54,13 @@ def validate_password(password):
         errors.append("Le mot de passe doit contenir au moins un chiffre.")
     return errors
 
-# Fonction pour valider l'e-mail
+# Valider l'e-mail
 def validate_email(email):
     """Valide l'e-mail."""
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
-# Fonction pour l'inscription
+# Inscription d'un nouvel utilisateur
 def signup(name, email, password, confirm_password, authorized_emails):
     """Gère l'inscription d'un nouvel utilisateur."""
     try:
@@ -93,7 +93,7 @@ def signup(name, email, password, confirm_password, authorized_emails):
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de l'inscription : {e}")
 
-# Fonction pour modifier le mot de passe
+# Mettre à jour le mot de passe
 def update_password(email, new_password, confirm_new_password):
     """Met à jour le mot de passe d'un utilisateur."""
     try:
@@ -118,7 +118,7 @@ def update_password(email, new_password, confirm_new_password):
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
 
-# Gestion de l'état de l'utilisateur
+# Initialiser l'état de la session
 def initialize_session_state():
     """Initialise l'état de la session."""
     if "logged_in" not in st.session_state:
@@ -129,7 +129,7 @@ def initialize_session_state():
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
 
-# Fonction pour se connecter
+# Connexion de l'utilisateur
 def login(email, password):
     """Gère la connexion de l'utilisateur."""
     try:
@@ -145,7 +145,7 @@ def login(email, password):
         st.error(f"Erreur: {e}")
         logging.error(f"Erreur lors de la connexion : {e}")
 
-# Fonction pour se déconnecter
+# Déconnexion de l'utilisateur
 def logout():
     """Gère la déconnexion de l'utilisateur."""
     st.session_state.logged_in = False
@@ -153,11 +153,10 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
-# Fonction pour interroger Gemini avec l'historique des interactions
+# Interroger Gemini avec l'historique des interactions
 def query_gemini_with_history(docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
-        # Ajoutez l'historique des interactions au prompt
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
         prompt = f"""
 Introduction et contexte :
@@ -171,14 +170,13 @@ Voici les contenus extraits des documents clients :
 
 Question : {user_question}
 """
-        # Interroger Gemini
-        model = GenerativeModel(model_name=model)  # Initialiser le modèle
-        response = model.generate_content(prompt)  # Générer la réponse
+        model = GenerativeModel(model_name=model)
+        response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
 
-# Fonction pour lister les fichiers dans un dossier Google Drive
+# Lister les fichiers dans un dossier Google Drive
 def list_files_in_folder(folder_id, drive_service):
     """Liste les fichiers dans un dossier Google Drive."""
     try:
@@ -191,7 +189,7 @@ def list_files_in_folder(folder_id, drive_service):
         st.error(f"Erreur lors de la récupération des fichiers : {e}")
         return []
 
-# Fonction pour extraire le texte d'un document Google Docs
+# Extraire le texte d'un document Google Docs
 def get_google_doc_text(doc_id, docs_service):
     """Extrait le texte d'un document Google Docs."""
     try:
@@ -206,25 +204,26 @@ def get_google_doc_text(doc_id, docs_service):
     except Exception as e:
         return f"Erreur lors de la lecture du document Google Docs : {e}"
 
-# Fonction principale pour charger les documents
-def load_documents(folder_id, drive_service, docs_service):
-    """Charge les documents depuis Google Drive."""
+# Charger les documents depuis plusieurs dossiers Google Drive
+def load_documents(folder_ids, drive_service, docs_service):
+    """Charge les documents depuis plusieurs dossiers Google Drive."""
     if not st.session_state.docs_text:
-        files = list_files_in_folder(folder_id, drive_service)
-        if files:
-            st.write("### Compagnies détectés :")
-            docs_text = ""
-            for file in files:
-                if file["mimeType"] == "application/vnd.google-apps.document":
-                    doc_text = get_google_doc_text(file["id"], docs_service)
-                    docs_text += f"\n\n---\n\n{doc_text}"
-                else:
-                    st.warning(f"Type de fichier non pris en charge : {file['name']}")
-            if docs_text:
-                st.session_state.docs_text = docs_text
-                st.success("Service validation✅.")
-        else:
-            st.warning("Aucun fichier trouvé dans ce dossier.")
+        docs_text = ""
+        for folder_id in folder_ids:
+            files = list_files_in_folder(folder_id, drive_service)
+            if files:
+                st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
+                for file in files:
+                    if file["mimeType"] == "application/vnd.google-apps.document":
+                        doc_text = get_google_doc_text(file["id"], docs_service)
+                        docs_text += f"\n\n---\n\n{doc_text}"
+                    else:
+                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
+            else:
+                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
+        if docs_text:
+            st.session_state.docs_text = docs_text
+            st.success("Service validation✅.")
 
 # Interface utilisateur
 def main():
@@ -382,12 +381,13 @@ def main():
             st.error(f"Erreur lors de l'initialisation des services Google : {e}")
             st.stop()
 
-        folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
-        if not folder_id:
-            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie.")
+        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_IDS", "").split(",")
+        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
+        if not folder_ids:
+            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_IDS' n'est pas définie ou est vide.")
             st.stop()
 
-        load_documents(folder_id, drive_service, docs_service)
+        load_documents(folder_ids, drive_service, docs_service)
 
         if st.session_state.docs_text:
             user_question = st.text_input("Posez une question sur tous les documents :")
