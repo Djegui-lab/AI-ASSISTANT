@@ -153,88 +153,23 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
-# Liste de variantes d'introduction
-INTRODUCTIONS = [
-    "Bonjour ! 👋 Je suis 🤖Assurbot🤖, votre assistant en assurance automobile. Comment puis-je vous aider aujourd'hui ?",
-    "Salut ! 😊 Ici 🤖Assurbot🤖, prêt à répondre à vos questions sur l'assurance auto. Que puis-je faire pour vous ?",
-    "Hey ! 🚗 Je suis 🤖Assurbot🤖, votre expert en assurance auto. Posez-moi vos questions !",
-    "Coucou ! 👋 🤖Assurbot🤖 à votre service pour tout ce qui concerne l'assurance automobile. Comment puis-je vous assister ?",
-    "Bienvenue ! 😊 Je suis 🤖Assurbot🤖, votre assistant en assurance auto. Que souhaitez-vous savoir ?",
-]
-
-# Liste de réponses pour les salutations
-SALUTATION_RESPONSES = [
-    "Bonjour ! 👋 Comment puis-je vous aider aujourd'hui ?",
-    "Salut ! 😊 Que puis-je faire pour vous ?",
-    "Coucou ! 👋 En quoi puis-je vous assister ?",
-    "Hello ! 🚗 Prêt à répondre à vos questions sur l'assurance auto.",
-    "Hey ! 😊 Je suis là pour vous aider. Quelle est votre question ?",
-]
-
-# Liste de réponses pour les remerciements
-THANK_YOU_RESPONSES = [
-    "Je vous en prie ! 😊 N'hésitez pas si vous avez d'autres questions.",
-    "Avec plaisir ! 👋 À bientôt pour de nouvelles questions.",
-    "De rien ! 🚗 Je suis là si vous avez besoin d'aide.",
-    "Pas de problème ! 😊 Bonne journée !",
-]
-
-# Fonction pour obtenir une introduction aléatoire
-def get_random_introduction():
-    """Retourne une introduction aléatoire."""
-    return random.choice(INTRODUCTIONS)
-
-# Fonction pour détecter les salutations
-def is_salutation(message):
-    """Vérifie si le message est une salutation simple."""
-    return message.lower().strip() in ["bonjour", "salut", "coucou", "hello", "hey", "hi"]
-
-# Fonction pour détecter les remerciements
-def is_thank_you(message):
-    """Vérifie si le message est un remerciement."""
-    return message.lower().strip() in ["merci", "thank you", "thanks"]
-
 # Fonction pour interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
+def query_gemini_with_history(docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
-        # Gérer les salutations simples
-        if is_salutation(user_question):
-            return random.choice(SALUTATION_RESPONSES)
-        
-        # Gérer les remerciements
-        if is_thank_you(user_question):
-            return random.choice(THANK_YOU_RESPONSES)
-        
-        # Limiter l'historique aux 5 dernières interactions
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[-5:]])
-        
-        # Tronquer les documents pour ne garder que les 10 000 premiers caractères
-        truncated_docs_text = docs_text[:10000]
-        
-        # Créer le prompt
-        introduction = get_random_introduction()
+        # Ajoutez l'historique des interactions au prompt
+        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
         prompt = f"""
-### **Introduction**
-{introduction}
+Introduction et contexte :
+Tu es Courtier, un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
 
-### **Historique des Conversations**
+Voici l'historique des conversations précédentes :
 {history_str}
 
-### **Contenu des Documents**
-{truncated_docs_text}
+Voici les contenus extraits des documents clients :
+{docs_text}
 
-### **Question de l'Utilisateur**
-{user_question}
-
-### **Instructions pour la Réponse**
-1. Organise la réponse en sections claires.
-2. Utilise des listes à puces et des emojis pour mettre en évidence les informations importantes.
-3. Ajoute des exemples concrets pour expliquer les termes techniques.
-4. Propose des conseils pratiques pour aider l'utilisateur.
-5. Sois convivial et rassurant dans ton ton.
-6. Résume les points clés à la fin de la réponse.
-7. Propose des alternatives si nécessaire.
+Question : {user_question}
 """
         # Interroger Gemini
         model = GenerativeModel(model_name=model)  # Initialiser le modèle
