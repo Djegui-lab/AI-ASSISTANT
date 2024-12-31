@@ -5,7 +5,7 @@ import firebase_admin
 from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-from google import genai
+from google.generativeai import GenerativeModel, configure  # Importez les bonnes bibliothèques
 import os
 import re
 import logging
@@ -195,7 +195,7 @@ def is_thank_you(message):
     return message.lower().strip() in ["merci", "thank you", "thanks"]
 
 # Fonction pour interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(client, docs_text, user_question, history, model="gemini-pro"):
+def query_gemini_with_history(docs_text, user_question, history, model="gemini-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Gérer les salutations simples
@@ -231,8 +231,9 @@ def query_gemini_with_history(client, docs_text, user_question, history, model="
 6. Résume les points clés à la fin de la réponse.
 7. Propose des alternatives si nécessaire.
 """
-        # Appel à l'API Gemini
-        response = client.generate_content(prompt, model=model)
+        # Interroger Gemini
+        model = GenerativeModel(model_name=model)  # Initialiser le modèle
+        response = model.generate_content(prompt)  # Générer la réponse
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
@@ -432,7 +433,7 @@ def main():
             credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
             drive_service = build("drive", "v3", credentials=credentials)
             docs_service = build("docs", "v1", credentials=credentials)
-            client = genai.Client(api_key=GEMINI_API_KEY)
+            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
             st.success("🤖 Assurbot initialisé 🚀 avec succès !")
         except json.JSONDecodeError:
             st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
@@ -452,7 +453,7 @@ def main():
             user_question = st.text_input("Posez une question sur tous les documents :")
             if st.button("Envoyer la question"):
                 with st.spinner("Interrogation 🤖Assurbot..."):
-                    response = query_gemini_with_history(client, st.session_state.docs_text, user_question, st.session_state.history)
+                    response = query_gemini_with_history(st.session_state.docs_text, user_question, st.session_state.history)
                 st.session_state.history.insert(0, {"question": user_question, "response": response})
 
         if st.session_state.history:
