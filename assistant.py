@@ -381,10 +381,10 @@ def main():
             st.error(f"Erreur lors de l'initialisation des services Google : {e}")
             st.stop()
 
-        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_IDS", "").split(",")
+        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
         folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
         if not folder_ids:
-            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_IDS' n'est pas définie ou est vide.")
+            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
             st.stop()
 
         load_documents(folder_ids, drive_service, docs_service)
