@@ -206,8 +206,13 @@ def query_gemini_with_history(docs_text, user_question, history, model="gemini-p
         if is_thank_you(user_question):
             return random.choice(THANK_YOU_RESPONSES)
         
-        # Gérer les questions normales
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+        # Limiter l'historique aux 5 dernières interactions
+        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[-5:]])
+        
+        # Tronquer les documents pour ne garder que les 10 000 premiers caractères
+        truncated_docs_text = docs_text[:10000]
+        
+        # Créer le prompt
         introduction = get_random_introduction()
         prompt = f"""
 ### **Introduction**
@@ -217,7 +222,7 @@ def query_gemini_with_history(docs_text, user_question, history, model="gemini-p
 {history_str}
 
 ### **Contenu des Documents**
-{docs_text}
+{truncated_docs_text}
 
 ### **Question de l'Utilisateur**
 {user_question}
