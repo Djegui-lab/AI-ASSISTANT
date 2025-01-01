@@ -229,6 +229,28 @@ def load_documents(folder_ids, drive_service, docs_service):
             st.session_state.docs_text = docs_text
             st.success("Service validation✅.")
 
+
+# ... (le reste de votre code reste inchangé jusqu'à la fonction load_authorized_emails)
+
+def upload_to_drive(file_path, file_name, folder_id):
+    """Téléverse un fichier dans un dossier spécifique sur Google Drive."""
+    try:
+        file_metadata = {
+            'name': file_name,
+            'parents': [folder_id]  # Spécifiez le dossier cible
+        }
+        media = MediaFileUpload(file_path, resumable=True)
+        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+        return file.get('id')
+    except Exception as e:
+        st.error(f"Erreur lors du téléversement du fichier sur Google Drive : {e}")
+        return None
+
+# ... (le reste de votre code reste inchangé)
+
+
+
+
 # Interface utilisateur
 
 def main():
