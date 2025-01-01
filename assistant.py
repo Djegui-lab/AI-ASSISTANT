@@ -245,6 +245,27 @@ def upload_to_drive(file_path, file_name, folder_id, drive_service):
         st.error(f"Erreur lors du téléversement du fichier sur Google Drive : {e}")
         return None
 
+# Fonction pour convertir un fichier en document Google Docs
+def convert_to_text(file_id, folder_id, drive_service):
+    """Convertit un fichier en document Google Docs et retourne l'ID du document."""
+    try:
+        # Copier le fichier dans Google Docs
+        doc_metadata = {
+            'name': 'Converted Document',
+            'mimeType': 'application/vnd.google-apps.document',
+            'parents': [folder_id]  # Spécifiez le dossier cible
+        }
+        doc = drive_service.files().copy(fileId=file_id, body=doc_metadata).execute()
+        doc_id = doc.get('id')
+
+        # Attendre que la conversion soit terminée
+        time.sleep(5)  # Peut nécessiter un délai plus long pour les gros fichiers
+
+        return doc_id
+    except Exception as e:
+        st.error(f"Erreur lors de la conversion du fichier en document Google Docs : {e}")
+        return None
+
 # Interface utilisateur
 def main():
     """Fonction principale pour l'interface utilisateur."""
@@ -377,8 +398,8 @@ def main():
 
         # Initialisation des services Google
         SCOPES = [
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/documents.readonly",
+            "https://www.googleapis.com/auth/drive",  # Accès complet à Google Drive
+            "https://www.googleapis.com/auth/documents.readonly",  # Lecture seule pour Google Docs
         ]
         SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -416,18 +437,22 @@ def main():
                 st.stop()
 
             file_id = upload_to_drive(file_path, uploaded_file.name, folder_id, drive_service)
-            st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
+            if file_id:
+                st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
 
-            # Convertir le fichier en texte brut avec Google Docs
-            doc_id = convert_to_text(file_id, folder_id)
-            st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
+                # Convertir le fichier en texte brut avec Google Docs
+                doc_id = convert_to_text(file_id, folder_id, drive_service)
+                if doc_id:
+                    st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
 
-            # Extraire le texte brut
-            text = extract_text_from_doc(doc_id)
+                    # Extraire le texte brut
+                    text = get_google_doc_text(doc_id, docs_service)
 
-            # Afficher le texte extrait
-            st.subheader("Texte extrait du fichier")
-            st.write(text)
+                    # Afficher le texte extrait
+                    st.subheader("Texte extrait du fichier")
+                    st.write(text)
+            else:
+                st.error("Le téléversement du fichier a échoué.")
 
         folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
         folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
