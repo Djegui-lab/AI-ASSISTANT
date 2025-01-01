@@ -230,6 +230,7 @@ def load_documents(folder_ids, drive_service, docs_service):
             st.success("Service validation✅.")
 
 # Interface utilisateur
+
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -385,6 +386,34 @@ def main():
             st.error(f"Erreur lors de l'initialisation des services Google : {e}")
             st.stop()
 
+        # Ajout du champ de drag-and-drop
+        uploaded_file = st.file_uploader("Déposez un fichier (PDF, JPG, PNG)", type=["pdf", "jpg", "png"])
+        if uploaded_file is not None:
+            # Sauvegarder le fichier temporairement
+            file_path = f"temp_{uploaded_file.name}"
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+
+            # Téléverser le fichier dans le dossier spécifique sur Google Drive
+            folder_id = os.environ.get("GOOGLE_DRIVE_UPLOAD_FOLDER_ID")  # ID du dossier pour les fichiers téléversés
+            if not folder_id:
+                st.error("La variable d'environnement 'GOOGLE_DRIVE_UPLOAD_FOLDER_ID' n'est pas définie.")
+                st.stop()
+
+            file_id = upload_to_drive(file_path, uploaded_file.name, folder_id)
+            st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
+
+            # Convertir le fichier en texte brut avec Google Docs
+            doc_id = convert_to_text(file_id, folder_id)
+            st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
+
+            # Extraire le texte brut
+            text = extract_text_from_doc(doc_id)
+
+            # Afficher le texte extrait
+            st.subheader("Texte extrait du fichier")
+            st.write(text)
+
         folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
         folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
         if not folder_ids:
@@ -408,7 +437,7 @@ def main():
                     st.markdown("---")
 
         st.markdown("---")
-        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
