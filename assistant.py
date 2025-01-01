@@ -256,12 +256,12 @@ def delete_file(file_id, drive_service):
         logging.error(f"Erreur lors de la suppression du fichier : {e}")
 
 # Fonction pour convertir un fichier en document Google Docs
-def convert_to_text(file_id, folder_id, drive_service):
+def convert_to_text(file_id, folder_id, drive_service, original_name):
     """Convertit un fichier en document Google Docs et retourne l'ID du document."""
     try:
         # Copier le fichier dans Google Docs
         doc_metadata = {
-            'name': 'Converted Document',
+            'name': original_name,  # Conserver le nom original du fichier
             'mimeType': 'application/vnd.google-apps.document',
             'parents': [folder_id]  # Spécifiez le dossier cible
         }
@@ -271,7 +271,7 @@ def convert_to_text(file_id, folder_id, drive_service):
         # Attendre que la conversion soit terminée
         time.sleep(10)  # Peut nécessiter un délai plus long pour les gros fichiers
 
-        # Supprimer le fichier PDF original
+        # Supprimer le fichier original (PDF, JPG, PNG)
         delete_file(file_id, drive_service)
 
         return doc_id
@@ -454,7 +454,7 @@ def main():
                 st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
 
                 # Convertir le fichier en texte brut avec Google Docs
-                doc_id = convert_to_text(file_id, folder_id, drive_service)
+                doc_id = convert_to_text(file_id, folder_id, drive_service, uploaded_file.name)
                 if doc_id:
                     st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
 
@@ -464,6 +464,12 @@ def main():
                     # Afficher le texte extrait
                     st.subheader("Texte extrait du fichier")
                     st.write(text)
+
+                    # Informer l'utilisateur que le texte a été extrait
+                    st.success("Le texte a été extrait avec succès ! Vous pouvez maintenant poser des questions sur le document.")
+
+                    # Recharger la page pour mettre à jour l'interface utilisateur
+                    st.rerun()
             else:
                 st.error("Le téléversement du fichier a échoué.")
 
