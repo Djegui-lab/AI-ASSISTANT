@@ -246,6 +246,16 @@ def upload_to_drive(file_path, file_name, folder_id, drive_service):
         st.error(f"Erreur lors du téléversement du fichier sur Google Drive : {e}")
         return None
 
+# Fonction pour supprimer un fichier de Google Drive
+def delete_file(file_id, drive_service):
+    """Supprime un fichier de Google Drive par son ID."""
+    try:
+        drive_service.files().delete(fileId=file_id).execute()
+        logging.info(f"Fichier supprimé avec succès : {file_id}")
+    except Exception as e:
+        st.error(f"Erreur lors de la suppression du fichier : {e}")
+        logging.error(f"Erreur lors de la suppression du fichier : {e}")
+
 # Fonction pour convertir un fichier en document Google Docs
 def convert_to_text(file_id, folder_id, drive_service):
     """Convertit un fichier en document Google Docs et retourne l'ID du document."""
@@ -261,6 +271,9 @@ def convert_to_text(file_id, folder_id, drive_service):
 
         # Attendre que la conversion soit terminée
         time.sleep(5)  # Peut nécessiter un délai plus long pour les gros fichiers
+
+        # Supprimer le fichier PDF original
+        delete_file(file_id, drive_service)
 
         return doc_id
     except Exception as e:
