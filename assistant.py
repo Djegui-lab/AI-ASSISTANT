@@ -6,11 +6,9 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
-import time
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -130,8 +128,6 @@ def initialize_session_state():
         st.session_state.history = []
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
-    if "documents_loaded" not in st.session_state:
-        st.session_state.documents_loaded = False
 
 # Connexion de l'utilisateur
 def login(email, password):
@@ -164,11 +160,11 @@ def query_gemini_with_history(docs_text, user_question, history, model="gemini-2
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
         prompt = f"""
 Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-N'hésite pas à demander le nom de l'utilisateur dans votre réponse mais une seule fois sans répéter pas au début de la discussion mais lorsque la discussion est approfondie et continue et lorsqu'il vous récompense. Dans ce cas, vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique son nom sans que tu le demandes en premier, n'oubliez pas vous avez le droit de lui demander une seule fois son nom sans répéter.
-Ne jamais communiquer sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis à votre disposition pour enrichir votre connaissance, mais vous pouvez donner le nom des produits d'assurances et le nom des compagnies d'assurance.
-Vous avez été créé en 2023 dans un petit village au Mali, mais le nom du village reste secret.
-Ne jamais donner trop de détails de comment Djegui WAGUE vous a créé.
+Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction acvec differents maniere de prononciation pour ne pas repeter les memmes introductions a la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+N'hesite pas a demander le nom de l'utilisateur dans votre reponse mais une seule fois sans repeter pas au debut de la discution mais l'orsque la discutions est approfondie et continue et l'orsq'uil vous recompence Dans ce cas vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique sont nom sans que tu le demande en premier, n'oublier pas vous avez le droit de lui demander une seule fois sont nom sans repeter.
+Ne jamais communique sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis a votre disposition pour enrichir votre connaissance, mais vous pouvez donnez le nom des produis d'assurances et le noms des compagnies d'assurance.
+Vous avez été creer en 2023 dans un petit village au Mali, mais le nom du village reste secret.
+Ne jamais donné trop de detail de comment Djegui WAGUE vous a crée.
 Voici l'historique des conversations précédentes :
 {history_str}
 
@@ -214,12 +210,13 @@ def get_google_doc_text(doc_id, docs_service):
 # Charger les documents depuis plusieurs dossiers Google Drive
 def load_documents(folder_ids, drive_service, docs_service):
     """Charge les documents depuis plusieurs dossiers Google Drive."""
-    if not st.session_state.documents_loaded:  # Ne charger que si les documents ne sont pas déjà chargés
+    if not st.session_state.docs_text:
         docs_text = ""
         for folder_id in folder_ids:
             files = list_files_in_folder(folder_id, drive_service)
             if files:
-                st.write(f"Compagnies détectées 😊✨🕵️")
+                #st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
+                st.write(f"Compagnies détectés 😊✨🕵️")
                 for file in files:
                     if file["mimeType"] == "application/vnd.google-apps.document":
                         doc_text = get_google_doc_text(file["id"], docs_service)
@@ -229,58 +226,8 @@ def load_documents(folder_ids, drive_service, docs_service):
             else:
                 st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
         if docs_text:
-            st.session_state.docs_text = docs_text  # Stocker les documents dans l'état de session
-            st.session_state.documents_loaded = True  # Marquer les documents comme chargés
+            st.session_state.docs_text = docs_text
             st.success("Service validation✅.")
-
-# Fonction pour téléverser un fichier dans Google Drive
-def upload_to_drive(file_path, file_name, folder_id, drive_service):
-    """Téléverse un fichier dans un dossier spécifique sur Google Drive."""
-    try:
-        file_metadata = {
-            'name': file_name,
-            'parents': [folder_id]  # Spécifiez le dossier cible
-        }
-        media = MediaFileUpload(file_path, resumable=True)
-        file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-        return file.get('id')
-    except Exception as e:
-        st.error(f"Erreur lors du téléversement du fichier sur Google Drive : {e}")
-        return None
-
-# Fonction pour supprimer un fichier de Google Drive
-def delete_file(file_id, drive_service):
-    """Supprime un fichier de Google Drive par son ID."""
-    try:
-        drive_service.files().delete(fileId=file_id).execute()
-        logging.info(f"Fichier supprimé avec succès : {file_id}")
-    except Exception as e:
-        st.error(f"Erreur lors de la suppression du fichier : {e}")
-        logging.error(f"Erreur lors de la suppression du fichier : {e}")
-
-# Fonction pour convertir un fichier en document Google Docs
-def convert_to_text(file_id, folder_id, drive_service, original_name):
-    """Convertit un fichier en document Google Docs et retourne l'ID du document."""
-    try:
-        # Copier le fichier dans Google Docs
-        doc_metadata = {
-            'name': original_name,  # Conserver le nom original du fichier
-            'mimeType': 'application/vnd.google-apps.document',
-            'parents': [folder_id]  # Spécifiez le dossier cible
-        }
-        doc = drive_service.files().copy(fileId=file_id, body=doc_metadata).execute()
-        doc_id = doc.get('id')
-
-        # Attendre que la conversion soit terminée
-        time.sleep(5)  # Peut nécessiter un délai plus long pour les gros fichiers
-
-        # Supprimer le fichier original (PDF, JPG, PNG)
-        delete_file(file_id, drive_service)
-
-        return doc_id
-    except Exception as e:
-        st.error(f"Erreur lors de la conversion du fichier en document Google Docs : {e}")
-        return None
 
 # Interface utilisateur
 def main():
@@ -414,8 +361,8 @@ def main():
 
         # Initialisation des services Google
         SCOPES = [
-            "https://www.googleapis.com/auth/drive",  # Accès complet à Google Drive
-            "https://www.googleapis.com/auth/documents.readonly",  # Lecture seule pour Google Docs
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/documents.readonly",
         ]
         SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
         GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -438,51 +385,13 @@ def main():
             st.error(f"Erreur lors de l'initialisation des services Google : {e}")
             st.stop()
 
-        # Ajout du champ de drag-and-drop
-        uploaded_file = st.file_uploader("Déposez un fichier (PDF, JPG, PNG)", type=["pdf", "jpg", "png"])
-        if uploaded_file is not None:
-            # Sauvegarder le fichier temporairement
-            file_path = f"temp_{uploaded_file.name}"
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-
-            # Téléverser le fichier dans le dossier spécifique sur Google Drive
-            folder_id = os.environ.get("GOOGLE_DRIVE_UPLOAD_FOLDER_ID")  # ID du dossier pour les fichiers téléversés
-            if not folder_id:
-                st.error("La variable d'environnement 'GOOGLE_DRIVE_UPLOAD_FOLDER_ID' n'est pas définie.")
-                st.stop()
-
-            file_id = upload_to_drive(file_path, uploaded_file.name, folder_id, drive_service)
-            if file_id:
-                st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
-
-                # Convertir le fichier en texte brut avec Google Docs
-                doc_id = convert_to_text(file_id, folder_id, drive_service, uploaded_file.name)
-                if doc_id:
-                    st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
-
-                    # Extraire le texte brut
-                    text = get_google_doc_text(doc_id, docs_service)
-
-                    # Afficher le texte extrait
-                    st.subheader("Texte extrait du fichier")
-                    st.write(text)
-
-                    # Informer l'utilisateur que le texte a été extrait
-                    st.success("Le texte a été extrait avec succès ! Vous pouvez maintenant poser des questions sur le document.")
-
-                    # Recharger la page pour mettre à jour l'interface utilisateur
-                    st.rerun()
-            else:
-                st.error("Le téléversement du fichier a échoué.")
-
         folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
         folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
         if not folder_ids:
             st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
             st.stop()
 
-        load_documents(folder_ids, drive_service, docs_service)  # Charger les documents une seule fois
+        load_documents(folder_ids, drive_service, docs_service)
 
         if st.session_state.docs_text:
             user_question = st.text_input("Posez une question sur tous les documents :")
