@@ -162,11 +162,11 @@ def query_gemini_with_history(docs_text, user_question, history, model="gemini-2
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
         prompt = f"""
 Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-N'hésite pas à demander le nom de l'utilisateur dans votre réponse mais une seule fois sans répéter pas au début de la discussion mais lorsque la discussion est approfondie et continue et lorsqu'il vous récompense. Dans ce cas, vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique son nom sans que tu le demandes en premier, n'oubliez pas vous avez le droit de lui demander une seule fois son nom sans répéter.
-Ne jamais communiquer sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis à votre disposition pour enrichir votre connaissance, mais vous pouvez donner le nom des produits d'assurances et le nom des compagnies d'assurance.
-Vous avez été créé en 2023 dans un petit village au Mali, mais le nom du village reste secret.
-Ne jamais donner trop de détails de comment Djegui WAGUE vous a créé.
+Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction acvec differents maniere de prononciation pour ne pas repeter les memmes introductions a la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+N'hesite pas a demander le nom de l'utilisateur dans votre reponse mais une seule fois sans repeter pas au debut de la discution mais l'orsque la discutions est approfondie et continue et l'orsq'uil vous recompence Dans ce cas vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique sont nom sans que tu le demande en premier, n'oublier pas vous avez le droit de lui demander une seule fois sont nom sans repeter.
+Ne jamais communique sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis a votre disposition pour enrichir votre connaissance, mais vous pouvez donnez le nom des produis d'assurances et le noms des compagnies d'assurance.
+Vous avez été creer en 2023 dans un petit village au Mali, mais le nom du village reste secret.
+Ne jamais donné trop de detail de comment Djegui WAGUE vous a crée.
 Voici l'historique des conversations précédentes :
 {history_str}
 
@@ -217,7 +217,8 @@ def load_documents(folder_ids, drive_service, docs_service):
         for folder_id in folder_ids:
             files = list_files_in_folder(folder_id, drive_service)
             if files:
-                st.write(f"Compagnies détectées 😊✨🕵️")
+                #st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
+                st.write(f"Compagnies détectés 😊✨🕵️")
                 for file in files:
                     if file["mimeType"] == "application/vnd.google-apps.document":
                         doc_text = get_google_doc_text(file["id"], docs_service)
@@ -256,12 +257,12 @@ def delete_file(file_id, drive_service):
         logging.error(f"Erreur lors de la suppression du fichier : {e}")
 
 # Fonction pour convertir un fichier en document Google Docs
-def convert_to_text(file_id, folder_id, drive_service, original_name):
+def convert_to_text(file_id, folder_id, drive_service):
     """Convertit un fichier en document Google Docs et retourne l'ID du document."""
     try:
         # Copier le fichier dans Google Docs
         doc_metadata = {
-            'name': original_name,  # Conserver le nom original du fichier
+            'name': 'Converted Document',
             'mimeType': 'application/vnd.google-apps.document',
             'parents': [folder_id]  # Spécifiez le dossier cible
         }
@@ -269,9 +270,9 @@ def convert_to_text(file_id, folder_id, drive_service, original_name):
         doc_id = doc.get('id')
 
         # Attendre que la conversion soit terminée
-        time.sleep(10)  # Peut nécessiter un délai plus long pour les gros fichiers
+        time.sleep(5)  # Peut nécessiter un délai plus long pour les gros fichiers
 
-        # Supprimer le fichier original (PDF, JPG, PNG)
+        # Supprimer le fichier PDF original
         delete_file(file_id, drive_service)
 
         return doc_id
@@ -454,7 +455,7 @@ def main():
                 st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
 
                 # Convertir le fichier en texte brut avec Google Docs
-                doc_id = convert_to_text(file_id, folder_id, drive_service, uploaded_file.name)
+                doc_id = convert_to_text(file_id, folder_id, drive_service)
                 if doc_id:
                     st.session_state['doc_id'] = doc_id  # Stocker l'ID dans la session Streamlit
 
@@ -464,12 +465,6 @@ def main():
                     # Afficher le texte extrait
                     st.subheader("Texte extrait du fichier")
                     st.write(text)
-
-                    # Informer l'utilisateur que le texte a été extrait
-                    st.success("Le texte a été extrait avec succès ! Vous pouvez maintenant poser des questions sur le document.")
-
-                    # Recharger la page pour mettre à jour l'interface utilisateur
-                    st.rerun()
             else:
                 st.error("Le téléversement du fichier a échoué.")
 
@@ -496,7 +491,7 @@ def main():
                     st.markdown("---")
 
         st.markdown("---")
-        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
