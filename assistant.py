@@ -6,10 +6,10 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
-from googleapiclient.http import MediaFileUpload 
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -230,10 +230,8 @@ def load_documents(folder_ids, drive_service, docs_service):
             st.session_state.docs_text = docs_text
             st.success("Service validation✅.")
 
-
-# ... (le reste de votre code reste inchangé jusqu'à la fonction load_authorized_emails)
-
-def upload_to_drive(file_path, file_name, folder_id):
+# Fonction pour téléverser un fichier dans Google Drive
+def upload_to_drive(file_path, file_name, folder_id, drive_service):
     """Téléverse un fichier dans un dossier spécifique sur Google Drive."""
     try:
         file_metadata = {
@@ -247,13 +245,7 @@ def upload_to_drive(file_path, file_name, folder_id):
         st.error(f"Erreur lors du téléversement du fichier sur Google Drive : {e}")
         return None
 
-# ... (le reste de votre code reste inchangé)
-
-
-
-
 # Interface utilisateur
-
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -423,7 +415,7 @@ def main():
                 st.error("La variable d'environnement 'GOOGLE_DRIVE_UPLOAD_FOLDER_ID' n'est pas définie.")
                 st.stop()
 
-            file_id = upload_to_drive(file_path, uploaded_file.name, folder_id)
+            file_id = upload_to_drive(file_path, uploaded_file.name, folder_id, drive_service)
             st.success(f"Fichier téléversé sur Google Drive avec l'ID : {file_id}")
 
             # Convertir le fichier en texte brut avec Google Docs
@@ -460,7 +452,7 @@ def main():
                     st.markdown("---")
 
         st.markdown("---")
-        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
