@@ -18,9 +18,9 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s 
 # Initialisation de Firebase
 def initialize_firebase():
     """Initialise Firebase avec les données de configuration."""
-    firebase_json_content = os.environ.get("FIREBASE_JSON")
+    firebase_json_content = os.environ.get("firebasejson")
     if not firebase_json_content:
-        st.error("La variable d'environnement 'FIREBASE_JSON' n'est pas définie.")
+        st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
         return False
 
     try:
@@ -31,7 +31,7 @@ def initialize_firebase():
             logging.info("Firebase initialisé avec succès.")
         return True
     except json.JSONDecodeError:
-        st.error("Le contenu de 'FIREBASE_JSON' n'est pas un JSON valide.")
+        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
     return False
