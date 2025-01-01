@@ -270,7 +270,7 @@ def convert_to_text(file_id, folder_id, drive_service):
         doc_id = doc.get('id')
 
         # Attendre que la conversion soit terminée
-        time.sleep(5)  # Peut nécessiter un délai plus long pour les gros fichiers
+        time.sleep(15)  # Peut nécessiter un délai plus long pour les gros fichiers
 
         # Supprimer le fichier PDF original
         delete_file(file_id, drive_service)
