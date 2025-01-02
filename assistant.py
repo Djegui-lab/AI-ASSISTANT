@@ -1,7 +1,10 @@
 import json
 import os
+import re
 import logging
 import streamlit as st
+import firebase_admin
+from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
@@ -50,15 +53,147 @@ def log_classification_error(question, predicted_class, corrected_class):
     log_message = f"Question : {question} | Prédiction : {predicted_class} | Correction : {corrected_class}"
     logging.info(log_message)
 
+# Initialisation de Firebase
+def initialize_firebase():
+    """Initialise Firebase avec les données de configuration."""
+    firebase_json_content = os.environ.get("firebasejson")
+    if not firebase_json_content:
+        st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
+        return False
+
+    try:
+        firebasejson = json.loads(firebase_json_content)
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(firebasejson)
+            firebase_admin.initialize_app(cred)
+            logging.info("Firebase initialisé avec succès.")
+        return True
+    except json.JSONDecodeError:
+        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
+    except Exception as e:
+        st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
+    return False
+
+# Charger la liste des e-mails autorisés
+def load_authorized_emails():
+    """Charge la liste des e-mails autorisés depuis les variables d'environnement."""
+    authorized_emails = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
+    return [email.strip() for email in authorized_emails if email.strip()]
+
+# Valider la complexité du mot de passe
+def validate_password(password):
+    """Valide la complexité du mot de passe."""
+    errors = []
+    if len(password) < 8:
+        errors.append("Le mot de passe doit contenir au moins 8 caractères.")
+    if not re.search(r"[A-Z]", password):
+        errors.append("Le mot de passe doit contenir au moins une majuscule.")
+    if not re.search(r"[a-z]", password):
+        errors.append("Le mot de passe doit contenir au moins une minuscule.")
+    if not re.search(r"[0-9]", password):
+        errors.append("Le mot de passe doit contenir au moins un chiffre.")
+    return errors
+
+# Valider l'e-mail
+def validate_email(email):
+    """Valide l'e-mail."""
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
+
+# Inscription d'un nouvel utilisateur
+def signup(name, email, password, confirm_password, authorized_emails):
+    """Gère l'inscription d'un nouvel utilisateur."""
+    try:
+        if email not in authorized_emails:
+            st.error("Votre e-mail n'est pas autorisé à s'inscrire.")
+            logging.warning(f"Tentative d'inscription non autorisée avec l'e-mail : {email}")
+            return
+
+        if not validate_email(email):
+            st.error("L'e-mail n'est pas valide.")
+            return
+
+        if password != confirm_password:
+            st.error("Les mots de passe ne correspondent pas.")
+            return
+
+        password_errors = validate_password(password)
+        if password_errors:
+            for error in password_errors:
+                st.error(error)
+            return
+
+        user = auth.create_user(email=email, password=password, display_name=name)
+        st.success(f"Utilisateur {user.email} créé avec succès!")
+        logging.info(f"Utilisateur inscrit avec succès : {email}")
+    except auth.EmailAlreadyExistsError:
+        st.error("Cet e-mail est déjà utilisé.")
+        logging.warning(f"Tentative d'inscription avec un e-mail déjà utilisé : {email}")
+    except Exception as e:
+        st.error(f"Erreur: {e}")
+        logging.error(f"Erreur lors de l'inscription : {e}")
+
+# Mettre à jour le mot de passe
+def update_password(email, new_password, confirm_new_password):
+    """Met à jour le mot de passe d'un utilisateur."""
+    try:
+        if new_password != confirm_new_password:
+            st.error("Les nouveaux mots de passe ne correspondent pas.")
+            return
+
+        password_errors = validate_password(new_password)
+        if password_errors:
+            for error in password_errors:
+                st.error(error)
+            return
+
+        user = auth.get_user_by_email(email)
+        auth.update_user(user.uid, password=new_password)
+        st.success(f"Mot de passe de l'utilisateur {email} mis à jour avec succès!")
+        logging.info(f"Mot de passe mis à jour pour l'utilisateur : {email}")
+    except auth.UserNotFoundError:
+        st.error("Aucun utilisateur trouvé avec cet e-mail.")
+        logging.warning(f"Tentative de mise à jour du mot de passe pour un utilisateur inexistant : {email}")
+    except Exception as e:
+        st.error(f"Erreur: {e}")
+        logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
+
 # Initialiser l'état de la session
 def initialize_session_state():
     """Initialise l'état de la session."""
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.user_email = None
     if "history" not in st.session_state:
         st.session_state.history = []
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
     if "client_docs_text" not in st.session_state:
         st.session_state.client_docs_text = ""
+
+# Connexion de l'utilisateur
+def login(email, password):
+    """Gère la connexion de l'utilisateur."""
+    try:
+        user = auth.get_user_by_email(email)
+        if user.email == email:  # Simulez une validation du mot de passe ici si nécessaire
+            st.session_state.logged_in = True
+            st.session_state.user_email = email
+            st.success(f"Connecté en tant que {email}")
+            logging.info(f"Utilisateur connecté : {email}")
+        else:
+            st.error("Connexion échouée, e-mail ou mot de passe incorrect.")
+    except Exception as e:
+        st.error(f"Erreur: {e}")
+        logging.error(f"Erreur lors de la connexion : {e}")
+
+# Déconnexion de l'utilisateur
+def logout():
+    """Gère la déconnexion de l'utilisateur."""
+    st.session_state.logged_in = False
+    st.session_state.user_email = None
+    st.success("Déconnexion réussie.")
+    logging.info("Utilisateur déconnecté.")
 
 # Interroger Gemini avec l'historique des interactions
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
@@ -253,100 +388,128 @@ def main():
     )
 
     initialize_session_state()
+    authorized_emails = load_authorized_emails()
 
-    st.title("🚗 Assistant Courtier en Assurance Auto")
+    if not st.session_state.logged_in:
+        st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
 
-    # Initialisation des services Google
-    SCOPES = [
-        "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/documents.readonly",
-    ]
-    SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+        tab1, tab2 = st.tabs(["Connexion", "Inscription"])
+        with tab1:
+            st.subheader("Connexion")
+            email = st.text_input("Email", key="login_email")
+            password = st.text_input("Mot de passe", type="password", key="login_password")
+            if st.button("Se connecter"):
+                login(email, password)
 
-    if not SERVICE_ACCOUNT_JSON:
-        st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
-        st.stop()
+        with tab2:
+            st.subheader("Inscription")
+            name = st.text_input("Nom complet (inscription)", key="signup_name")
+            new_email = st.text_input("Email (inscription)", key="signup_email")
+            new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
+            confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password")
+            if st.button("S'inscrire"):
+                signup(name, new_email, new_password, confirm_password, authorized_emails)
 
-    try:
-        google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
-        credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
-        drive_service = build("drive", "v3", credentials=credentials)
-        docs_service = build("docs", "v1", credentials=credentials)
-        configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
-        st.success("🤖 Assurbot initialisé 🚀 avec succès !")
-    except json.JSONDecodeError:
-        st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
-        st.stop()
-    except Exception as e:
-        st.error(f"Erreur lors de l'initialisation des services Google : {e}")
-        st.stop()
+    if st.session_state.logged_in:
+        st.success(f"Bienvenue, {st.session_state.user_email}!")
+        if st.button("Se déconnecter"):
+            logout()
 
-    folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
-    folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
-    if not folder_ids:
-        st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
-        st.stop()
+        st.title("🚗 Assistant Courtier en Assurance Auto")
 
-    load_documents(folder_ids, drive_service, docs_service)
+        # Initialisation des services Google
+        SCOPES = [
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/documents.readonly",
+        ]
+        SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-    # Section pour téléverser les documents clients
-    st.header("📄 Téléversez les documents des clients")
-    uploaded_files = st.file_uploader(
-        "Glissez-déposez les documents des clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True
-    )
+        if not SERVICE_ACCOUNT_JSON:
+            st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
+            st.stop()
 
-    if uploaded_files:
-        client_docs_text = ""
-        for uploaded_file in uploaded_files:
-            st.write(f"### Fichier : {uploaded_file.name}")
+        try:
+            google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
+            credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
+            drive_service = build("drive", "v3", credentials=credentials)
+            docs_service = build("docs", "v1", credentials=credentials)
+            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
+            st.success("🤖 Assurbot initialisé 🚀 avec succès !")
+        except json.JSONDecodeError:
+            st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
+            st.stop()
+        except Exception as e:
+            st.error(f"Erreur lors de l'initialisation des services Google : {e}")
+            st.stop()
+
+        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
+        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
+        if not folder_ids:
+            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
+            st.stop()
+
+        load_documents(folder_ids, drive_service, docs_service)
+
+        # Section pour téléverser les documents clients
+        st.header("📄 Téléversez les documents des clients")
+        uploaded_files = st.file_uploader(
+            "Glissez-déposez les documents des clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True
+        )
+
+        if uploaded_files:
+            client_docs_text = ""
+            for uploaded_file in uploaded_files:
+                st.write(f"### Fichier : {uploaded_file.name}")
+                
+                # Extraire le texte avec Amazon Textract
+                file_bytes = uploaded_file.read()
+                extracted_text = extract_text_with_textract(file_bytes)
+                client_docs_text += f"\n\n---\n\n{extracted_text}"
+                st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
             
-            # Extraire le texte avec Amazon Textract
-            file_bytes = uploaded_file.read()
-            extracted_text = extract_text_with_textract(file_bytes)
-            client_docs_text += f"\n\n---\n\n{extracted_text}"
-            st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
-        
-        st.session_state.client_docs_text = client_docs_text
+            st.session_state.client_docs_text = client_docs_text
 
-    # Section pour poser des questions
-    st.header("❓ Posez une question sur les documents")
-    user_question = st.text_input("Entrez votre question ici")
-    if st.button("Envoyer la question"):
-        # Classifier la question
-        predicted_class = classify_question_with_huggingface(user_question)
-        final_class = ask_user_feedback(user_question, predicted_class)
-        
-        # Journaliser les erreurs
-        if final_class != predicted_class:
-            log_classification_error(user_question, predicted_class, final_class)
-        
-        # Adapter les documents en fonction de la classification
-        if final_class == "client":
-            docs_text = ""  # Ne pas utiliser les documents des compagnies
-        elif final_class == "company":
-            client_docs_text = ""  # Ne pas utiliser les documents clients
-        else:  # "comparison" ou "both"
-            pass  # Utiliser les deux types de documents
-        
-        with st.spinner("Interrogation 🤖Assurbot..."):
-            response = query_gemini_with_history(
-                st.session_state.docs_text,  # Documents Google Docs
-                st.session_state.client_docs_text,  # Documents clients téléversés
-                user_question,
-                st.session_state.history
-            )
-        st.session_state.history.insert(0, {"question": user_question, "response": response})
+        # Section pour poser des questions
+        st.header("❓ Posez une question sur les documents")
+        user_question = st.text_input("Entrez votre question ici")
+        if st.button("Envoyer la question"):
+            # Classifier la question
+            predicted_class = classify_question_with_huggingface(user_question)
+            final_class = ask_user_feedback(user_question, predicted_class)
+            
+            # Journaliser les erreurs
+            if final_class != predicted_class:
+                log_classification_error(user_question, predicted_class, final_class)
+            
+            # Adapter les documents en fonction de la classification
+            if final_class == "client":
+                docs_text = ""  # Ne pas utiliser les documents des compagnies
+            elif final_class == "company":
+                client_docs_text = ""  # Ne pas utiliser les documents clients
+            else:  # "comparison" ou "both"
+                pass  # Utiliser les deux types de documents
+            
+            with st.spinner("Interrogation 🤖Assurbot..."):
+                response = query_gemini_with_history(
+                    st.session_state.docs_text,  # Documents Google Docs
+                    st.session_state.client_docs_text,  # Documents clients téléversés
+                    user_question,
+                    st.session_state.history
+                )
+            st.session_state.history.insert(0, {"question": user_question, "response": response})
 
-    if st.session_state.history:
-        with st.expander("📜 Historique des interactions", expanded=True):
-            for interaction in st.session_state.history:
-                st.markdown(f"**Question :** {interaction['question']}")
-                st.markdown(f"**Réponse :** {interaction['response']}")
-                st.markdown("---")
+        if st.session_state.history:
+            with st.expander("📜 Historique des interactions", expanded=True):
+                for interaction in st.session_state.history:
+                    st.markdown(f"**Question :** {interaction['question']}")
+                    st.markdown(f"**Réponse :** {interaction['response']}")
+                    st.markdown("---")
 
-    st.markdown("---")
-    st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("---")
+        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
-    main()
+    if initialize_firebase():
+        main()
