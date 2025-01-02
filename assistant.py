@@ -31,6 +31,7 @@ def classify_question_with_huggingface(question):
         response = requests.post(HUGGINGFACE_API_URL, headers=headers, json=payload)
         response.raise_for_status()  # Vérifie les erreurs HTTP
         result = response.json()
+        st.write(f"Scores de confiance : {dict(zip(result['labels'], result['scores']))}")  # Afficher les scores
         return result["labels"][0]  # Retourne la classe prédite
     except requests.exceptions.RequestException as e:
         logging.error(f"Erreur lors de l'appel à Hugging Face API : {e}")
@@ -41,9 +42,13 @@ def ask_user_feedback(question, predicted_class):
     """Demande à l'utilisateur de confirmer ou de corriger la classification."""
     st.write(f"Question : {question}")
     st.write(f"Classification prédite : {predicted_class}")
-    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"])
+    
+    # Afficher un radio bouton pour le feedback
+    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"], key=f"feedback_{question}")
+    
+    # Si l'utilisateur clique sur "Non", afficher un selectbox pour corriger la classification
     if feedback == "Non":
-        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"])
+        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"], key=f"corrected_class_{question}")
         return corrected_class
     return predicted_class
 
@@ -508,7 +513,7 @@ def main():
                     st.markdown("---")
 
         st.markdown("---")
-        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
