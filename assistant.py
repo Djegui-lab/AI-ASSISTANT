@@ -10,9 +10,43 @@ from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
+
+# Charger le modèle et le tokenizer BERT pré-entraînés
+tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+model = BertForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=3)  # 3 classes : client, company, comparison
+
+# Fonction pour classifier la question
+def classify_question_with_bert(question):
+    """Classifie la question en utilisant un modèle BERT pré-entraîné."""
+    inputs = tokenizer(question, return_tensors="pt", truncation=True, padding=True, max_length=512)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        logits = outputs.logits
+    predicted_class = torch.argmax(logits, dim=1).item()
+    classes = ["client", "company", "comparison"]
+    return classes[predicted_class]
+
+# Fonction pour demander le feedback utilisateur
+def ask_user_feedback(question, predicted_class):
+    """Demande à l'utilisateur de confirmer ou de corriger la classification."""
+    st.write(f"Question : {question}")
+    st.write(f"Classification prédite : {predicted_class}")
+    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"])
+    if feedback == "Non":
+        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"])
+        return corrected_class
+    return predicted_class
+
+# Fonction pour journaliser les erreurs
+def log_classification_error(question, predicted_class, corrected_class):
+    """Journalise les erreurs de classification."""
+    log_message = f"Question : {question} | Prédiction : {predicted_class} | Correction : {corrected_class}"
+    logging.info(log_message)
 
 # Initialisation de Firebase
 def initialize_firebase():
@@ -160,14 +194,10 @@ def logout():
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[-5:]])  # Limiter l'historique
         prompt = f"""
 Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-N'hésite pas à demander le nom de l'utilisateur dans votre réponse mais une seule fois sans répéter pas au début de la discussion mais lorsque la discussion est approfondie et continue et lorsqu'il vous récompense. Dans ce cas, vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique son nom sans que tu le demandes en premier, n'oubliez pas vous avez le droit de lui demander une seule fois son nom sans répéter.
-Ne jamais communiquer sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis à votre disposition pour enrichir votre connaissance, mais vous pouvez donner le nom des produits d'assurances et le noms des compagnies d'assurance.
-Vous avez été créé en 2023 dans un petit village au Mali, mais le nom du village reste secret.
-Ne jamais donner trop de détails de comment Djegui WAGUE vous a créé.
+Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine.
 Voici l'historique des conversations précédentes :
 {history_str}
 
@@ -440,6 +470,22 @@ def main():
         st.header("❓ Posez une question sur les documents")
         user_question = st.text_input("Entrez votre question ici")
         if st.button("Envoyer la question"):
+            # Classifier la question
+            predicted_class = classify_question_with_bert(user_question)
+            final_class = ask_user_feedback(user_question, predicted_class)
+            
+            # Journaliser les erreurs
+            if final_class != predicted_class:
+                log_classification_error(user_question, predicted_class, final_class)
+            
+            # Adapter les documents en fonction de la classification
+            if final_class == "client":
+                docs_text = ""  # Ne pas utiliser les documents des compagnies
+            elif final_class == "company":
+                client_docs_text = ""  # Ne pas utiliser les documents clients
+            else:  # "comparison" ou "both"
+                pass  # Utiliser les deux types de documents
+            
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
                     st.session_state.docs_text,  # Documents Google Docs
