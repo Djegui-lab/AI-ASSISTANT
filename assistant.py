@@ -10,7 +10,8 @@ from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3
-import requests  # Pour faire des appels HTTP à l'API Hugging Face
+import requests
+import pandas as pd
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -19,9 +20,16 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s 
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
 
-# Fonction pour classifier la question avec Hugging Face Inference API
+# Données des compagnies (exemple)
+COMPAGNIES = {
+    "Maxance": {"âge_minimum": 18, "bonus_malus_max": 1.5},
+    "April Auto Flex": {"âge_minimum": 21, "bonus_malus_max": 1.3},
+    "2MA Assurance Particulier": {"âge_minimum": 25, "bonus_malus_max": 1.0},
+}
+
+# Fonction pour classifier la question avec Hugging Face
 def classify_question_with_huggingface(question):
-    """Classifie la question en utilisant Hugging Face Inference API."""
+    """Classifie la question en utilisant Hugging Face."""
     headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
     payload = {
         "inputs": question,
@@ -29,34 +37,13 @@ def classify_question_with_huggingface(question):
     }
     try:
         response = requests.post(HUGGINGFACE_API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Vérifie les erreurs HTTP
+        response.raise_for_status()
         result = response.json()
-        st.write(f"Scores de confiance : {dict(zip(result['labels'], result['scores']))}")  # Afficher les scores
-        return result["labels"][0]  # Retourne la classe prédite
+        st.write(f"Scores de confiance : {dict(zip(result['labels'], result['scores']))}")
+        return result["labels"][0]
     except requests.exceptions.RequestException as e:
         logging.error(f"Erreur lors de l'appel à Hugging Face API : {e}")
-        return "comparison"  # Retourne une valeur par défaut en cas d'erreur
-
-# Fonction pour demander le feedback utilisateur
-def ask_user_feedback(question, predicted_class):
-    """Demande à l'utilisateur de confirmer ou de corriger la classification."""
-    st.write(f"Question : {question}")
-    st.write(f"Classification prédite : {predicted_class}")
-    
-    # Afficher un radio bouton pour le feedback
-    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"], key=f"feedback_{question}")
-    
-    # Si l'utilisateur clique sur "Non", afficher un selectbox pour corriger la classification
-    if feedback == "Non":
-        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"], key=f"corrected_class_{question}")
-        return corrected_class
-    return predicted_class
-
-# Fonction pour journaliser les erreurs
-def log_classification_error(question, predicted_class, corrected_class):
-    """Journalise les erreurs de classification."""
-    log_message = f"Question : {question} | Prédiction : {predicted_class} | Correction : {corrected_class}"
-    logging.info(log_message)
+        return "comparison"
 
 # Initialisation de Firebase
 def initialize_firebase():
@@ -175,6 +162,8 @@ def initialize_session_state():
         st.session_state.docs_text = ""
     if "client_docs_text" not in st.session_state:
         st.session_state.client_docs_text = ""
+    if "clients" not in st.session_state:
+        st.session_state.clients = pd.DataFrame(columns=["Nom", "Âge", "Bonus Malus"])
 
 # Connexion de l'utilisateur
 def login(email, password):
@@ -423,46 +412,24 @@ def main():
 
         st.title("🚗 Assistant Courtier en Assurance Auto")
 
-        # Initialisation des services Google
-        SCOPES = [
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/documents.readonly",
-        ]
-        SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+        # Section pour ajouter un client
+        st.header("👤 Ajouter un client")
+        with st.form("ajouter_client"):
+            nom = st.text_input("Nom")
+            age = st.number_input("Âge", min_value=0, max_value=120)
+            bonus_malus = st.number_input("Coefficient de Bonus Malus", min_value=0.0, step=0.1)
+            if st.form_submit_button("Ajouter"):
+                nouveau_client = {"Nom": nom, "Âge": age, "Bonus Malus": bonus_malus}
+                st.session_state.clients = st.session_state.clients.append(nouveau_client, ignore_index=True)
+                st.success("Client ajouté avec succès !")
 
-        if not SERVICE_ACCOUNT_JSON:
-            st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
-            st.stop()
+        # Afficher la liste des clients
+        st.header("📋 Liste des clients")
+        st.write(st.session_state.clients)
 
-        try:
-            google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
-            credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
-            drive_service = build("drive", "v3", credentials=credentials)
-            docs_service = build("docs", "v1", credentials=credentials)
-            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
-            st.success("🤖 Assurbot initialisé 🚀 avec succès !")
-        except json.JSONDecodeError:
-            st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
-            st.stop()
-        except Exception as e:
-            st.error(f"Erreur lors de l'initialisation des services Google : {e}")
-            st.stop()
-
-        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
-        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
-        if not folder_ids:
-            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
-            st.stop()
-
-        load_documents(folder_ids, drive_service, docs_service)
-
-        # Section pour téléverser les documents clients
-        st.header("📄 Téléversez les documents des clients")
-        uploaded_files = st.file_uploader(
-            "Glissez-déposez les documents des clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True
-        )
-
+        # Téléversement des documents
+        st.header("📄 Téléversez les documents clients")
+        uploaded_files = st.file_uploader("Glissez-déposez les documents clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True)
         if uploaded_files:
             client_docs_text = ""
             for uploaded_file in uploaded_files:
@@ -482,20 +449,8 @@ def main():
         if st.button("Envoyer la question"):
             # Classifier la question
             predicted_class = classify_question_with_huggingface(user_question)
-            final_class = ask_user_feedback(user_question, predicted_class)
             
-            # Journaliser les erreurs
-            if final_class != predicted_class:
-                log_classification_error(user_question, predicted_class, final_class)
-            
-            # Adapter les documents en fonction de la classification
-            if final_class == "client":
-                docs_text = ""  # Ne pas utiliser les documents des compagnies
-            elif final_class == "company":
-                client_docs_text = ""  # Ne pas utiliser les documents clients
-            else:  # "comparison" ou "both"
-                pass  # Utiliser les deux types de documents
-            
+            # Générer une réponse en fonction de la classification
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
                     st.session_state.docs_text,  # Documents Google Docs
@@ -511,6 +466,29 @@ def main():
                     st.markdown(f"**Question :** {interaction['question']}")
                     st.markdown(f"**Réponse :** {interaction['response']}")
                     st.markdown("---")
+
+        # Vérification d'acceptation par une compagnie
+        st.header("✅ Vérifier l'acceptation par une compagnie")
+        compagnie = st.selectbox("Choisissez une compagnie", list(COMPAGNIES.keys()))
+        client_index = st.selectbox("Choisissez un client", st.session_state.clients.index)
+        if st.button("Vérifier l'acceptation"):
+            client = st.session_state.clients.iloc[client_index]
+            conditions = COMPAGNIES[compagnie]
+            if client["Âge"] >= conditions["âge_minimum"] and client["Bonus Malus"] <= conditions["bonus_malus_max"]:
+                st.success(f"Le client {client['Nom']} est accepté par {compagnie}.")
+            else:
+                st.error(f"Le client {client['Nom']} n'est pas accepté par {compagnie}.")
+
+        # Faire le tour des compagnies
+        st.header("🔍 Faire le tour des compagnies")
+        client_index_tour = st.selectbox("Choisissez un client pour le tour des compagnies", st.session_state.clients.index)
+        if st.button("Lancer le tour des compagnies"):
+            client = st.session_state.clients.iloc[client_index_tour]
+            for compagnie, conditions in COMPAGNIES.items():
+                if client["Âge"] >= conditions["âge_minimum"] and client["Bonus Malus"] <= conditions["bonus_malus_max"]:
+                    st.success(f"Le client {client['Nom']} est accepté par {compagnie}.")
+                else:
+                    st.error(f"Le client {client['Nom']} n'est pas accepté par {compagnie}.")
 
         st.markdown("---")
         st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
