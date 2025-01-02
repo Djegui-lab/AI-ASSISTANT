@@ -1,0 +1,7 @@
+# Exclure les fichiers inutiles
+*.psd
+*.pdf
+/test
+/spec
+*.log
+/tmp
