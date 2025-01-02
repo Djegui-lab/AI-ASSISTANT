@@ -9,6 +9,7 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
+import boto3  # Ajout pour Amazon Textract
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -128,6 +129,8 @@ def initialize_session_state():
         st.session_state.history = []
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
+    if "client_docs_text" not in st.session_state:  # Ajout pour les documents clients
+        st.session_state.client_docs_text = ""
 
 # Connexion de l'utilisateur
 def login(email, password):
@@ -215,7 +218,6 @@ def load_documents(folder_ids, drive_service, docs_service):
         for folder_id in folder_ids:
             files = list_files_in_folder(folder_id, drive_service)
             if files:
-                #st.write(f"### Fichiers détectés dans le dossier {folder_id} :")
                 st.write(f"Compagnies détectés 😊✨🕵️")
                 for file in files:
                     if file["mimeType"] == "application/vnd.google-apps.document":
@@ -228,6 +230,25 @@ def load_documents(folder_ids, drive_service, docs_service):
         if docs_text:
             st.session_state.docs_text = docs_text
             st.success("Service validation✅.")
+
+# Fonction pour extraire le texte avec Amazon Textract
+def extract_text_with_textract(file_bytes):
+    """Extrait le texte d'un fichier avec Amazon Textract."""
+    try:
+        textract_client = boto3.client(
+            "textract",
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION", "eu-central-1"),
+        )
+        response = textract_client.detect_document_text(Document={"Bytes": file_bytes})
+        text = ""
+        for item in response["Blocks"]:
+            if item["BlockType"] == "LINE":
+                text += item["Text"] + "\n"
+        return text.strip()
+    except Exception as e:
+        return f"Erreur lors de l'extraction du texte avec Textract : {e}"
 
 # Interface utilisateur
 def main():
@@ -393,12 +414,36 @@ def main():
 
         load_documents(folder_ids, drive_service, docs_service)
 
-        if st.session_state.docs_text:
-            user_question = st.text_input("Posez une question sur tous les documents :")
-            if st.button("Envoyer la question"):
-                with st.spinner("Interrogation 🤖Assurbot..."):
-                    response = query_gemini_with_history(st.session_state.docs_text, user_question, st.session_state.history)
-                st.session_state.history.insert(0, {"question": user_question, "response": response})
+        # Section pour téléverser les documents clients
+        st.header("📄 Téléversez les documents des clients")
+        uploaded_files = st.file_uploader(
+            "Glissez-déposez les documents des clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True
+        )
+
+        if uploaded_files:
+            for uploaded_file in uploaded_files:
+                st.write(f"### Fichier : {uploaded_file.name}")
+                
+                # Extraire le texte avec Amazon Textract
+                file_bytes = uploaded_file.read()
+                extracted_text = extract_text_with_textract(file_bytes)
+                st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
+                
+                # Comparer avec les documents Google Docs (exemple)
+                comparison_result = query_gemini_with_history(
+                    st.session_state.docs_text, 
+                    f"Comparez ce document client avec les documents Google Docs : {extracted_text}", 
+                    st.session_state.history
+                )
+                st.write(f"**Comparaison avec Google Docs :** {comparison_result}")
+
+        # Section pour poser des questions
+        st.header("❓ Posez une question sur les documents")
+        user_question = st.text_input("Entrez votre question ici")
+        if st.button("Envoyer la question"):
+            with st.spinner("Interrogation 🤖Assurbot..."):
+                response = query_gemini_with_history(st.session_state.docs_text, user_question, st.session_state.history)
+            st.session_state.history.insert(0, {"question": user_question, "response": response})
 
         if st.session_state.history:
             with st.expander("📜 Historique des interactions", expanded=True):
