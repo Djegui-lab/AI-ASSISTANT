@@ -10,53 +10,9 @@ from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3
-import requests  # Pour faire des appels HTTP à l'API Hugging Face
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
-
-# Clé API Hugging Face
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
-
-# Fonction pour classifier la question avec Hugging Face Inference API
-def classify_question_with_huggingface(question):
-    """Classifie la question en utilisant Hugging Face Inference API."""
-    headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-    payload = {
-        "inputs": question,
-        "parameters": {"candidate_labels": ["client", "company", "comparison"]}
-    }
-    try:
-        response = requests.post(HUGGINGFACE_API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Vérifie les erreurs HTTP
-        result = response.json()
-        st.write(f"Scores de confiance : {dict(zip(result['labels'], result['scores']))}")  # Afficher les scores
-        return result["labels"][0]  # Retourne la classe prédite
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Erreur lors de l'appel à Hugging Face API : {e}")
-        return "comparison"  # Retourne une valeur par défaut en cas d'erreur
-
-# Fonction pour demander le feedback utilisateur
-def ask_user_feedback(question, predicted_class):
-    """Demande à l'utilisateur de confirmer ou de corriger la classification."""
-    st.write(f"Question : {question}")
-    st.write(f"Classification prédite : {predicted_class}")
-    
-    # Afficher un radio bouton pour le feedback
-    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"], key=f"feedback_{question}")
-    
-    # Si l'utilisateur clique sur "Non", afficher un selectbox pour corriger la classification
-    if feedback == "Non":
-        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"], key=f"corrected_class_{question}")
-        return corrected_class
-    return predicted_class
-
-# Fonction pour journaliser les erreurs
-def log_classification_error(question, predicted_class, corrected_class):
-    """Journalise les erreurs de classification."""
-    log_message = f"Question : {question} | Prédiction : {predicted_class} | Correction : {corrected_class}"
-    logging.info(log_message)
 
 # Initialisation de Firebase
 def initialize_firebase():
@@ -313,9 +269,18 @@ def extract_text_with_textract(file_bytes):
 # Interface utilisateur
 def main():
     """Fonction principale pour l'interface utilisateur."""
+    # Styles CSS personnalisés
     st.markdown(
         """
         <style>
+        .stApp {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
         .stButton button {
             background-color: #4CAF50;
             color: white;
@@ -372,37 +337,15 @@ def main():
         .centered-text:hover {
             color: #367c39;
         }
-        .stApp {
-            background: linear-gradient(135deg, #f0f2f6, #e6f7ff);
-            padding: 20px;
+        .history-item {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .stSuccess {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #c3e6cb;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stSuccess:hover {
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-            transform: translateY(-2px);
-        }
-        .stError {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #f5c6cb;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stError:hover {
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-            transform: translateY(-2px);
+        .history-item:hover {
+            background-color: #f1f1f1;
         }
         </style>
         """,
@@ -419,17 +362,23 @@ def main():
         tab1, tab2 = st.tabs(["Connexion", "Inscription"])
         with tab1:
             st.subheader("Connexion")
-            email = st.text_input("Email", key="login_email")
-            password = st.text_input("Mot de passe", type="password", key="login_password")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                email = st.text_input("Email", key="login_email", placeholder="Entrez votre e-mail")
+            with col2:
+                password = st.text_input("Mot de passe", type="password", key="login_password", placeholder="Entrez votre mot de passe")
             if st.button("Se connecter"):
                 login(email, password)
 
         with tab2:
             st.subheader("Inscription")
-            name = st.text_input("Nom complet (inscription)", key="signup_name")
-            new_email = st.text_input("Email (inscription)", key="signup_email")
-            new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
-            confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                name = st.text_input("Nom complet (inscription)", key="signup_name", placeholder="Entrez votre nom complet")
+                new_email = st.text_input("Email (inscription)", key="signup_email", placeholder="Entrez votre e-mail")
+            with col2:
+                new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password", placeholder="Créez un mot de passe")
+                confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password", placeholder="Confirmez votre mot de passe")
             if st.button("S'inscrire"):
                 signup(name, new_email, new_password, confirm_password, authorized_emails)
 
@@ -495,24 +444,8 @@ def main():
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
-        user_question = st.text_input("Entrez votre question ici")
+        user_question = st.text_input("Entrez votre question ici", placeholder="Exemple : Quel est mon type de conduite ?")
         if st.button("Envoyer la question"):
-            # Classifier la question
-            predicted_class = classify_question_with_huggingface(user_question)
-            final_class = ask_user_feedback(user_question, predicted_class)
-            
-            # Journaliser les erreurs
-            if final_class != predicted_class:
-                log_classification_error(user_question, predicted_class, final_class)
-            
-            # Adapter les documents en fonction de la classification
-            if final_class == "client":
-                docs_text = ""  # Ne pas utiliser les documents des compagnies
-            elif final_class == "company":
-                client_docs_text = ""  # Ne pas utiliser les documents clients
-            else:  # "comparison" ou "both"
-                pass  # Utiliser les deux types de documents
-            
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
                     st.session_state.docs_text,  # Documents Google Docs
@@ -525,12 +458,18 @@ def main():
         if st.session_state.history:
             with st.expander("📜 Historique des interactions", expanded=True):
                 for interaction in st.session_state.history:
-                    st.markdown(f"**Question :** {interaction['question']}")
-                    st.markdown(f"**Réponse :** {interaction['response']}")
-                    st.markdown("---")
+                    st.markdown(
+                        f"""
+                        <div class="history-item">
+                            <strong>Question :</strong> {interaction['question']}<br>
+                            <strong>Réponse :</strong> {interaction['response']}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
         st.markdown("---")
-        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
