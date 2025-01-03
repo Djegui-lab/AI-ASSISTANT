@@ -1,503 +1,388 @@
-import json
-import os
-import re
-import logging
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, auth
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-from google.generativeai import GenerativeModel, configure
-from google.api_core.exceptions import GoogleAPIError
-import boto3
-from functools import lru_cache
+from google import genai
 
-# Configuration de la journalisation
-logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
+# Initialisation de Firebase Admin SDK
+firebase_json_path = "comparaisonai-firebase-adminsdk-in1aq-8bc3bb1e29.json"  # Fichier JSON dans le même répertoire
+if not firebase_admin._apps:
+    cred = credentials.Certificate(firebase_json_path)
+    firebase_admin.initialize_app(cred)
 
-# Initialisation de Firebase
-def initialize_firebase():
-    """Initialise Firebase avec les données de configuration."""
-    firebase_json_content = os.environ.get("firebasejson")
-    if not firebase_json_content:
-        st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
-        return False
+# Gestion de l'état de l'utilisateur
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.user_email = None
 
+def signup(email, password):
     try:
-        firebasejson = json.loads(firebase_json_content)
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(firebasejson)
-            firebase_admin.initialize_app(cred)
-            logging.info("Firebase initialisé avec succès.")
-        return True
-    except json.JSONDecodeError:
-        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
-    except Exception as e:
-        st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
-    return False
-
-# Charger la liste des e-mails autorisés
-def load_authorized_emails():
-    """Charge la liste des e-mails autorisés depuis les variables d'environnement."""
-    authorized_emails = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
-    return [email.strip() for email in authorized_emails if email.strip()]
-
-# Valider la complexité du mot de passe
-def validate_password(password):
-    """Valide la complexité du mot de passe."""
-    errors = []
-    if len(password) < 8:
-        errors.append("Le mot de passe doit contenir au moins 8 caractères.")
-    if not re.search(r"[A-Z]", password):
-        errors.append("Le mot de passe doit contenir au moins une majuscule.")
-    if not re.search(r"[a-z]", password):
-        errors.append("Le mot de passe doit contenir au moins une minuscule.")
-    if not re.search(r"[0-9]", password):
-        errors.append("Le mot de passe doit contenir au moins un chiffre.")
-    return errors
-
-# Valider l'e-mail
-def validate_email(email):
-    """Valide l'e-mail."""
-    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return re.match(pattern, email) is not None
-
-# Inscription d'un nouvel utilisateur
-def signup(name, email, password, confirm_password, authorized_emails):
-    """Gère l'inscription d'un nouvel utilisateur."""
-    try:
-        if email not in authorized_emails:
-            st.error("Votre e-mail n'est pas autorisé à s'inscrire.")
-            logging.warning(f"Tentative d'inscription non autorisée avec l'e-mail : {email}")
-            return
-
-        if not validate_email(email):
-            st.error("L'e-mail n'est pas valide.")
-            return
-
-        if password != confirm_password:
-            st.error("Les mots de passe ne correspondent pas.")
-            return
-
-        password_errors = validate_password(password)
-        if password_errors:
-            for error in password_errors:
-                st.error(error)
-            return
-
-        user = auth.create_user(email=email, password=password, display_name=name)
+        user = auth.create_user(email=email, password=password)
         st.success(f"Utilisateur {user.email} créé avec succès!")
-        logging.info(f"Utilisateur inscrit avec succès : {email}")
-    except auth.EmailAlreadyExistsError:
-        st.error("Cet e-mail est déjà utilisé.")
-        logging.warning(f"Tentative d'inscription avec un e-mail déjà utilisé : {email}")
     except Exception as e:
         st.error(f"Erreur: {e}")
-        logging.error(f"Erreur lors de l'inscription : {e}")
 
-# Mettre à jour le mot de passe
-def update_password(email, new_password, confirm_new_password):
-    """Met à jour le mot de passe d'un utilisateur."""
-    try:
-        if new_password != confirm_new_password:
-            st.error("Les nouveaux mots de passe ne correspondent pas.")
-            return
-
-        password_errors = validate_password(new_password)
-        if password_errors:
-            for error in password_errors:
-                st.error(error)
-            return
-
-        user = auth.get_user_by_email(email)
-        auth.update_user(user.uid, password=new_password)
-        st.success(f"Mot de passe de l'utilisateur {email} mis à jour avec succès!")
-        logging.info(f"Mot de passe mis à jour pour l'utilisateur : {email}")
-    except auth.UserNotFoundError:
-        st.error("Aucun utilisateur trouvé avec cet e-mail.")
-        logging.warning(f"Tentative de mise à jour du mot de passe pour un utilisateur inexistant : {email}")
-    except Exception as e:
-        st.error(f"Erreur: {e}")
-        logging.error(f"Erreur lors de la mise à jour du mot de passe : {e}")
-
-# Initialiser l'état de la session
-def initialize_session_state():
-    """Initialise l'état de la session."""
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
-        st.session_state.user_email = None
-    if "history" not in st.session_state:
-        st.session_state.history = []
-    if "docs_text" not in st.session_state:
-        st.session_state.docs_text = ""
-    if "client_docs_text" not in st.session_state:
-        st.session_state.client_docs_text = ""
-
-# Connexion de l'utilisateur
 def login(email, password):
-    """Gère la connexion de l'utilisateur."""
     try:
         user = auth.get_user_by_email(email)
         if user.email == email:  # Simulez une validation du mot de passe ici si nécessaire
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success(f"Connecté en tant que {email}")
-            logging.info(f"Utilisateur connecté : {email}")
         else:
             st.error("Connexion échouée, e-mail ou mot de passe incorrect.")
     except Exception as e:
         st.error(f"Erreur: {e}")
-        logging.error(f"Erreur lors de la connexion : {e}")
 
-# Déconnexion de l'utilisateur
 def logout():
-    """Gère la déconnexion de l'utilisateur."""
     st.session_state.logged_in = False
     st.session_state.user_email = None
     st.success("Déconnexion réussie.")
-    logging.info("Utilisateur déconnecté.")
 
-# Fonction pour interroger Gemini avec cache
-@lru_cache(maxsize=100)
-def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-1.0-pro"):
-    """Interroge Gemini avec l'historique des interactions."""
-    try:
-        # Réponses rapides pour les salutations et questions générales
-        if user_question.lower().strip() in ["bonjour", "salut", "hello", "hi", "coucou"]:
-            return "Bonjour ! Je suis 🤖 Assurbot🤖, votre assistant en assurance automobile. Comment puis-je vous aider aujourd'hui ?"
-        
-        if user_question.lower().strip() in ["comment ça va", "ça va", "comment vas-tu"]:
-            return "Je vais bien, merci ! 😊 En quoi puis-je vous aider concernant votre assurance automobile ?"
+# CSS pour une interface moderne et créative
+st.markdown(
+    """
+    <style>
+    /* Style général pour les boutons */
+    .stButton button {
+        background-color: #4CAF50;  /* Vert */
+        color: white;
+        border-radius: 12px;  /* Coins plus arrondis */
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stButton button:hover {
+        background-color: #45a049;  /* Vert plus foncé au survol */
+        transform: scale(1.05);  /* Effet de zoom */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée */
+    }
+    .stButton button:active {
+        background-color: #367c39;  /* Vert encore plus foncé au clic */
+        transform: scale(0.95);  /* Effet de pression */
+    }
 
-        # Si la question est générale ou ne semble pas liée à l'assurance, répondre rapidement
-        general_keywords = ["temps", "météo", "blague", "rigoler", "amusant"]
-        if any(keyword in user_question.lower() for keyword in general_keywords):
-            return "Je suis désolé, mais je suis spécialisé dans l'assurance automobile. En quoi puis-je vous aider dans ce domaine ?"
+    /* Style pour les champs de texte */
+    .stTextInput input {
+        border-radius: 12px;  /* Coins plus arrondis */
+        padding: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background-color: #f9f9f9;  /* Fond légèrement gris */
+    }
+    .stTextInput input:focus {
+        border-color: #4CAF50;  /* Bordure verte lors de la sélection */
+        box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);  /* Ombre verte plus large */
+        outline: none;
+        background-color: white;  /* Fond blanc lors de la sélection */
+    }
 
-        # Gestion des demandes d'assurance
-        if "je cherche une assurance auto" in user_question.lower():
-            return "Je peux vous aider à trouver une assurance auto adaptée à vos besoins. Pour commencer, pourriez-vous me fournir quelques informations de base, comme l'immatriculation de votre véhicule et votre usage principal (privé, professionnel, etc.) ?"
+    /* Style pour les titres */
+    .stMarkdown h1 {
+        color: #2E86C1;  /* Bleu */
+        font-size: 42px;  /* Taille de police plus grande */
+        font-weight: bold;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        text-align: center;  /* Centrer le titre */
+    }
+    .stMarkdown h1:hover {
+        color: #1c5a7a;  /* Bleu plus foncé au survol */
+        transform: scale(1.02);  /* Légère augmentation de la taille */
+    }
 
-        # Sinon, vérifier les documents pour une réponse précise
-        prompt = f"""
-        Tu es 🤖 Assurbot🤖, un assistant spécialisé en assurance automobile. Ton rôle est de fournir des réponses **claires, précises et structurées**. Suis attentivement les instructions ci-dessous pour répondre à la question de l'utilisateur.
+    .stMarkdown h2 {
+        color: #D35400;  /* Orange */
+        font-size: 32px;  /* Taille de police plus grande */
+        font-weight: bold;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        text-align: center;  /* Centrer le sous-titre */
+    }
+    .stMarkdown h2:hover {
+        color: #a84300;  /* Orange plus foncé au survol */
+        transform: scale(1.02);  /* Légère augmentation de la taille */
+    }
 
-        ---
+    .stMarkdown h3 {
+        color: #4CAF50;  /* Vert */
+        font-size: 26px;  /* Taille de police plus grande */
+        font-weight: bold;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+        text-align: center;  /* Centrer le sous-titre */
+    }
+    .stMarkdown h3:hover {
+        color: #367c39;  /* Vert plus foncé au survol */
+        transform: scale(1.02);  /* Légère augmentation de la taille */
+    }
 
-        ### Contexte :
-        #### Historique des conversations :
+    /* Style pour le spinner (animation de chargement) */
+    .stSpinner {
+        color: #4CAF50;  /* Vert */
+    }
+
+    /* Style pour les messages de succès */
+    .stSuccess {
+        background-color: #d4edda;  /* Fond vert clair */
+        color: #155724;  /* Texte vert foncé */
+        padding: 15px;
+        border-radius: 12px;  /* Coins plus arrondis */
+        border: 1px solid #c3e6cb;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stSuccess:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
+        transform: translateY(-2px);  /* Effet de levée */
+    }
+
+    /* Style pour les messages d'erreur */
+    .stError {
+        background-color: #f8d7da;  /* Fond rouge clair */
+        color: #721c24;  /* Texte rouge foncé */
+        padding: 15px;
+        border-radius: 12px;  /* Coins plus arrondis */
+        border: 1px solid #f5c6cb;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+    }
+    .stError:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
+        transform: translateY(-2px);  /* Effet de levée */
+    }
+
+    /* Style pour les liens */
+    a {
+        color: #2E86C1;  /* Bleu */
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    a:hover {
+        color: #1c5a7a;  /* Bleu plus foncé au survol */
+        text-decoration: underline;  /* Soulignement au survol */
+    }
+
+    /* Style pour les conteneurs */
+    .stContainer {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;  /* Coins plus arrondis */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Ombre légère */
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stContainer:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);  /* Ombre plus prononcée au survol */
+        transform: translateY(-2px);  /* Effet de levée */
+    }
+
+    /* Style pour les séparateurs */
+    .stMarkdown hr {
+        border: 1px solid #e0e0e0;
+        margin: 20px 0;
+    }
+
+    /* Effet de rotation pour les icônes ou éléments spécifiques */
+    .rotate-on-hover {
+        transition: transform 0.3s ease;
+    }
+    .rotate-on-hover:hover {
+        transform: rotate(10deg);  /* Rotation de 10 degrés au survol */
+    }
+
+    /* Effet de fondu pour les éléments */
+    .fade-on-hover {
+        transition: opacity 0.3s ease;
+    }
+    .fade-on-hover:hover {
+        opacity: 0.8;  /* Légère transparence au survol */
+    }
+
+    /* Effet de gradient animé pour les boutons ou conteneurs */
+    .gradient-animation {
+        background: linear-gradient(90deg, #4CAF50, #2E86C1);
+        background-size: 200% auto;
+        transition: background-position 0.5s ease;
+    }
+    .gradient-animation:hover {
+        background-position: right center;  /* Animation du gradient au survol */
+    }
+
+    /* Style pour le fond de la page */
+    .stApp {
+        background: linear-gradient(135deg, #f0f2f6, #e6f7ff);  /* Dégradé de fond */
+        padding: 20px;
+    }
+
+    /* Style pour les cartes modernes */
+    .modern-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .modern-card:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Interface utilisateur avec onglets
+if not st.session_state.logged_in:
+    st.title("Application Streamlit avec Firebase Auth")
+    st.write("Connectez-vous ou inscrivez-vous pour accéder au contenu.")
+
+    tab1, tab2 = st.tabs(["Connexion", "Inscription"])
+
+    with tab1:
+        st.subheader("Connexion")
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Mot de passe", type="password", key="login_password")
+        if st.button("Se connecter"):
+            login(email, password)
+
+    with tab2:
+        st.subheader("Inscription")
+        new_email = st.text_input("Email (inscription)", key="signup_email")
+        new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
+        if st.button("S'inscrire"):
+            signup(new_email, new_password)
+
+# Si l'utilisateur est connecté, affichez l'application principale
+if st.session_state.logged_in:
+    st.success(f"Bienvenue, {st.session_state.user_email}!")
+    if st.button("Se déconnecter"):
+        logout()
+
+    # Votre application principale commence ici
+    st.title("🚗 Assistant Courtier en Assurance Auto")
+
+    # Configurations
+    SERVICE_ACCOUNT_FILE = "comparatifgrossistes-53e9d8d5a4f0.json"
+    SCOPES = ["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/documents.readonly"]
+    gemini_api_key = "AIzaSyDkp3DVEJR6XE24SbaJMTEm271ZFKKMHkc"  # Remplacez par votre clé API Gemini
+
+    # Initialiser les services Google Drive et Docs
+    credentials = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES
+    )
+    drive_service = build("drive", "v3", credentials=credentials)
+    docs_service = build("docs", "v1", credentials=credentials)
+
+    # Initialiser Gemini
+    client = genai.Client(api_key=gemini_api_key)
+
+    # Fonction pour lister les fichiers dans un dossier Google Drive
+    def list_files_in_folder(folder_id):
+        try:
+            results = drive_service.files().list(
+                q=f"'{folder_id}' in parents",
+                fields="files(id, name, mimeType)"
+            ).execute()
+            return results.get("files", [])
+        except Exception as e:
+            st.error(f"Erreur lors de la récupération des fichiers : {e}")
+            return []
+
+    # Fonction pour extraire le texte d'un document Google Docs
+    def get_google_doc_text(doc_id):
+        try:
+            document = docs_service.documents().get(documentId=doc_id).execute()
+            text_content = ""
+            for element in document.get("body", {}).get("content", []):
+                if "paragraph" in element:
+                    for text_run in element.get("paragraph", {}).get("elements", []):
+                        if "textRun" in text_run:
+                            text_content += text_run["textRun"]["content"]
+            return text_content.strip()
+        except Exception as e:
+            return f"Erreur lors de la lecture du document Google Docs : {e}"
+
+    # Fonction pour interroger Gemini avec l'historique des interactions
+    def query_gemini_with_history(docs_text, user_question, history, model="gemini-2.0-flash-exp"):
+        try:
+            # Ajoutez l'historique des interactions au prompt
+            history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+            prompt = f"""
+        Introduction et contexte :
+        Tu es Courtier, un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+
+        Voici l'historique des conversations précédentes :
         {history_str}
 
-        #### Contenu des documents clients :
-        {client_docs_text}
+        Voici les contenus extraits des documents clients :
 
-        #### Contenu des documents Google Docs :
         {docs_text}
 
-        ---
-
-        ### Question de l'utilisateur :
-        {user_question}
-
-        ---
-
-       
-
-        2. **Structure ta réponse** :
-           - Utilise des **listes à puces** pour les informations multiples.
-           - Organise les réponses complexes en **paragraphes courts** ou avec des **sous-titres**.
-
-        3. **Sois professionnel et poli** :
-           - Adopte un ton courtois et adapté à un contexte professionnel.
-
-        ---
-
-        ### Réponse attendue :
+        Question : {user_question}
         """
-        model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
-        if len(response_text) > 500:  # Limiter la réponse à 500 caractères
-            response_text = response_text[:500] + "..."
-        return response_text
-    except Exception as e:
-        return f"Erreur lors de l'interrogation de Gemini : {e}"
+            response = client.models.generate_content(model=model, contents=prompt)
+            return response.text.strip()
+        except Exception as e:
+            return f"Erreur lors de l'interrogation de Gemini : {e}"
 
-# Lister les fichiers dans un dossier Google Drive
-def list_files_in_folder(folder_id, drive_service):
-    """Liste les fichiers dans un dossier Google Drive."""
-    try:
-        results = drive_service.files().list(
-            q=f"'{folder_id}' in parents",
-            fields="files(id, name, mimeType)"
-        ).execute()
-        return results.get("files", [])
-    except Exception as e:
-        st.error(f"Erreur lors de la récupération des fichiers : {e}")
-        return []
+    # Initialiser st.session_state["history"] si ce n'est pas déjà fait
+    if "history" not in st.session_state:
+        st.session_state["history"] = []
 
-# Extraire le texte d'un document Google Docs
-def get_google_doc_text(doc_id, docs_service):
-    """Extrait le texte d'un document Google Docs."""
-    try:
-        document = docs_service.documents().get(documentId=doc_id).execute()
-        text_content = ""
-        for element in document.get("body", {}).get("content", []):
-            if "paragraph" in element:
-                for text_run in element.get("paragraph", {}).get("elements", []):
-                    if "textRun" in text_run:
-                        text_content += text_run["textRun"]["content"]
-        return text_content.strip()
-    except Exception as e:
-        return f"Erreur lors de la lecture du document Google Docs : {e}"
+    # Vérifiez si les documents ont déjà été chargés dans la session
+    if "docs_text" not in st.session_state:
+        # Entrez l'ID du dossier Google Drive
+        folder_id = st.text_input("Entrez l'ID du dossier Google Drive :")
 
-# Charger les documents depuis plusieurs dossiers Google Drive
-def load_documents(folder_ids, drive_service, docs_service):
-    """Charge les documents depuis plusieurs dossiers Google Drive."""
-    if not st.session_state.docs_text:
-        docs_text = ""
-        for folder_id in folder_ids:
-            files = list_files_in_folder(folder_id, drive_service)
+        if folder_id:
+            files = list_files_in_folder(folder_id)
             if files:
-                st.write(f"Compagnies détectés 😊✨🕵️")
+                st.write("### Fichiers détectés :")
+                docs_text = ""
                 for file in files:
-                    if file["mimeType"] == "application/vnd.google-apps.document":
-                        doc_text = get_google_doc_text(file["id"], docs_service)
+                    if file["mimeType"] == "application/vnd.google-apps.document":  # Google Docs
+                        st.write(f"Lecture du document : {file['name']}")
+                        doc_text = get_google_doc_text(file["id"])
                         docs_text += f"\n\n---\n\n{doc_text}"
                     else:
                         st.warning(f"Type de fichier non pris en charge : {file['name']}")
-            else:
-                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
-        if docs_text:
-            st.session_state.docs_text = docs_text
-            st.success("Service validation✅.")
-
-# Fonction pour extraire le texte avec Amazon Textract
-def extract_text_with_textract(file_bytes):
-    """Extrait le texte d'un fichier avec Amazon Textract."""
-    try:
-        textract_client = boto3.client(
-            "textract",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=os.getenv("AWS_REGION", "eu-central-1"),
-        )
-        response = textract_client.detect_document_text(Document={"Bytes": file_bytes})
-        text = ""
-        for item in response["Blocks"]:
-            if item["BlockType"] == "LINE":
-                text += item["Text"] + "\n"
-        return text.strip()
-    except Exception as e:
-        return f"Erreur lors de l'extraction du texte avec Textract : {e}"
-
-# Interface utilisateur
-def main():
-    """Fonction principale pour l'interface utilisateur."""
-    # Styles CSS personnalisés
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            max-width: 800px;
-            margin: auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stButton button {
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stButton button:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        .stButton button:active {
-            background-color: #367c39;
-            transform: scale(0.95);
-        }
-        .stTextInput input {
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background-color: #f9f9f9;
-        }
-        .stTextInput input:focus {
-            border-color: #4CAF50;
-            box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
-            outline: none;
-            background-color: white;
-        }
-        .centered-title {
-            text-align: center;
-            font-size: 42px;
-            font-weight: bold;
-            color: #2E86C1;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .centered-title:hover {
-            color: #1c5a7a;
-            transform: scale(1.02);
-        }
-        .centered-text {
-            text-align: center;
-            font-size: 18px;
-            color: #4CAF50;
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-        }
-        .centered-text:hover {
-            color: #367c39;
-        }
-        .history-item {
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background-color: #f9f9f9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .history-item:hover {
-            background-color: #f1f1f1;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    initialize_session_state()
-    authorized_emails = load_authorized_emails()
-
-    if not st.session_state.logged_in:
-        st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
-
-        tab1, tab2 = st.tabs(["Connexion", "Inscription"])
-        with tab1:
-            st.subheader("Connexion")
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                email = st.text_input("Email", key="login_email", placeholder="Entrez votre e-mail")
-            with col2:
-                password = st.text_input("Mot de passe", type="password", key="login_password", placeholder="Entrez votre mot de passe")
-            if st.button("Se connecter"):
-                login(email, password)
-
-        with tab2:
-            st.subheader("Inscription")
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                name = st.text_input("Nom complet (inscription)", key="signup_name", placeholder="Entrez votre nom complet")
-                new_email = st.text_input("Email (inscription)", key="signup_email", placeholder="Entrez votre e-mail")
-            with col2:
-                new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password", placeholder="Créez un mot de passe")
-                confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password", placeholder="Confirmez votre mot de passe")
-            if st.button("S'inscrire"):
-                signup(name, new_email, new_password, confirm_password, authorized_emails)
-
-    if st.session_state.logged_in:
-        st.success(f"Bienvenue, {st.session_state.user_email}!")
-        if st.button("Se déconnecter"):
-            logout()
-
-        st.title("🚗 Assistant Courtier en Assurance Auto")
-
-        # Initialisation des services Google
-        SCOPES = [
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/documents.readonly",
-        ]
-        SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-        if not SERVICE_ACCOUNT_JSON:
-            st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
-            st.stop()
-
-        try:
-            google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
-            credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
-            drive_service = build("drive", "v3", credentials=credentials)
-            docs_service = build("docs", "v1", credentials=credentials)
-            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
-            st.success("🤖 Assurbot initialisé 🚀 avec succès !")
-        except json.JSONDecodeError:
-            st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
-            st.stop()
-        except Exception as e:
-            st.error(f"Erreur lors de l'initialisation des services Google : {e}")
-            st.stop()
-
-        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
-        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
-        if not folder_ids:
-            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
-            st.stop()
-
-        load_documents(folder_ids, drive_service, docs_service)
-
-        # Section pour téléverser les documents clients
-        st.header("📄 Téléversez les documents des clients")
-        uploaded_files = st.file_uploader(
-            "Glissez-déposez les documents des clients (images ou PDF)", type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=True
-        )
-
-        if uploaded_files:
-            client_docs_text = ""
-            for uploaded_file in uploaded_files:
-                st.write(f"### Fichier : {uploaded_file.name}")
                 
-                # Extraire le texte avec Amazon Textract
-                file_bytes = uploaded_file.read()
-                extracted_text = extract_text_with_textract(file_bytes)
-                client_docs_text += f"\n\n---\n\n{extracted_text}"
-                # st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
-            
-            st.session_state.client_docs_text = client_docs_text
+                if docs_text:
+                    st.session_state["docs_text"] = docs_text
+                    st.success("Les documents ont été chargés.")
+            else:
+                st.warning("Aucun fichier trouvé dans ce dossier.")
+    else:
+        st.success("Les documents sont déjà chargés et prêts à être utilisés.")
 
-        # Section pour poser des questions
-        st.header("❓ Posez une question sur les documents")
-        user_question = st.text_input("Entrez votre question ici", placeholder="Exemple : Quel est mon type de conduite ?")
+    # Posez une question
+    if "docs_text" in st.session_state:
+        user_question = st.text_input("Posez une question sur tous les documents :")
         if st.button("Envoyer la question"):
-            with st.spinner("Interrogation 🤖Assurbot..."):
-                history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in st.session_state.history[-5:]])  # Limiter l'historique
-                response = query_gemini_with_history_cached(
-                    st.session_state.docs_text[:10000],  # Limiter la taille des documents
-                    st.session_state.client_docs_text[:10000],
-                    user_question,
-                    history_str,
-                    model="gemini-1.0-pro"  # Utiliser un modèle plus rapide
-                )
-            st.session_state.history.insert(0, {"question": user_question, "response": response})
+            with st.spinner("Interrogation de Gemini..."):
+                # Interroger Gemini avec l'historique
+                response = query_gemini_with_history(st.session_state["docs_text"], user_question, st.session_state["history"])
+            
+            # Ajouter la question et la réponse à l'historique (en haut de la liste)
+            st.session_state["history"].insert(0, {"question": user_question, "response": response})
 
-        if st.session_state.history:
-            with st.expander("📜 Historique des interactions", expanded=True):
-                for interaction in st.session_state.history:
-                    st.markdown(
-                        f"""
-                        <div class="history-item">
-                            <strong>Question :</strong> {interaction['question']}<br>
-                            <strong>Réponse :</strong> {interaction['response']}
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+    # Affichage des messages dans un conteneur déroulant
+    if st.session_state["history"]:
+        with st.expander("📜 Historique des interactions", expanded=True):
+            for interaction in st.session_state["history"]:
+                st.markdown(f"**Question :** {interaction['question']}")
+                st.markdown(f"**Réponse :** {interaction['response']}")
+                st.markdown("---")
 
-        st.markdown("---")
-        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
-
-if __name__ == "__main__":
-    if initialize_firebase():
-        main()
+    # Pied de page
+    st.markdown("---")
+    st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
