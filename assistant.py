@@ -16,7 +16,7 @@ import requests  # Pour faire des appels HTTP à l'API Hugging Face
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
 
 # Constantes pour les variables d'environnement
-FIREBASE_JSON = os.getenv("FIREBASE_JSON")
+FIREBASE_JSON = os.getenv("firebasejson")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
 GOOGLE_APPLICATION_CREDENTIALS_JSON = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
@@ -33,7 +33,7 @@ def initialize_firebase():
         return False
 
     try:
-        firebasejson = json.loads(firebasejson)
+        firebasejson = json.loads(FIREBASE_JSON)
         if not firebase_admin._apps:
             cred = credentials.Certificate(firebasejson)
             firebase_admin.initialize_app(cred)
@@ -435,7 +435,7 @@ def main():
                     st.markdown("---")
 
         st.markdown("---")
-        st.markdown("© 2025 Assistant Assurance Auto. Tous droits réservés.")
+        st.markdown("© 2023 Assistant Assurance Auto. Tous droits réservés.")
 
 if __name__ == "__main__":
     if initialize_firebase():
