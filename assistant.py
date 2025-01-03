@@ -9,7 +9,8 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
-import boto3  # Ajout pour Amazon Textract
+import boto3  # Pour Amazon Textract
+from concurrent.futures import ThreadPoolExecutor
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -126,10 +127,10 @@ def initialize_session_state():
         st.session_state.logged_in = False
         st.session_state.user_email = None
     if "history" not in st.session_state:
-        st.session_state.history = []
+        st.session_state.history = []  # Historique des interactions
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
-    if "client_docs_text" not in st.session_state:  # Ajout pour les documents clients
+    if "client_docs_text" not in st.session_state:
         st.session_state.client_docs_text = ""
 
 # Connexion de l'utilisateur
@@ -160,10 +161,13 @@ def logout():
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
+        # Convertir l'historique en une chaîne de caractères
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+        
+        # Construire le prompt avec l'historique
         prompt = f"""
 Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine.
 
 Voici l'historique des conversations précédentes :
 {history_str}
@@ -179,7 +183,7 @@ Question : {user_question}
 Pour répondre à cette question, analyse attentivement les informations fournies dans les documents clients et les documents des compagnies d'assurance. Si la question porte sur une carte grise, cherche des informations comme le nom du propriétaire, le numéro d'immatriculation, ou d'autres détails pertinents. Si tu ne trouves pas les informations nécessaires, explique pourquoi et demande des précisions.
 """
         model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, max_tokens=150)  # Limite la réponse à 150 tokens
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
@@ -423,18 +427,10 @@ def main():
         )
 
         if uploaded_files:
-            for uploaded_file in uploaded_files:
-                st.write(f"### Fichier : {uploaded_file.name}")
-                
-                # Extraire le texte avec Amazon Textract
-                file_bytes = uploaded_file.read()
-                extracted_text = extract_text_with_textract(file_bytes)
-                
-                # Afficher un aperçu du texte extrait (optionnel, pour débogage)
-                st.write("Aperçu du texte extrait :")
-                st.text(extracted_text[:500])  # Affiche les 500 premiers caractères
-                
-                # Stocker le texte extrait dans session_state
+            with ThreadPoolExecutor() as executor:
+                extracted_texts = list(executor.map(process_file, uploaded_files))
+            
+            for extracted_text in extracted_texts:
                 if "client_docs_text" not in st.session_state:
                     st.session_state.client_docs_text = ""
                 st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
@@ -452,6 +448,7 @@ def main():
                 )
             st.session_state.history.insert(0, {"question": user_question, "response": response})
 
+        # Affichage de l'historique des interactions
         if st.session_state.history:
             with st.expander("📜 Historique des interactions", expanded=True):
                 for interaction in st.session_state.history:
