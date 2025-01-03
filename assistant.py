@@ -33,7 +33,7 @@ def initialize_firebase():
         return False
 
     try:
-        firebasejson = json.loads(FIREBASE_JSON)
+        firebasejson = json.loads(firebasejson)
         if not firebase_admin._apps:
             cred = credentials.Certificate(firebasejson)
             firebase_admin.initialize_app(cred)
