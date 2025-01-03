@@ -10,6 +10,7 @@ from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3
+from functools import lru_cache
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -156,44 +157,27 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
-# Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
+# Fonction pour interroger Gemini avec cache
+@lru_cache(maxsize=100)
+def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-1.0-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
-        # Formater l'historique des interactions
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[-5:]])  # Limiter à 5 dernières interactions
-
-        # Construire le prompt en fonction du contexte
         prompt = f"""
-Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine.
+        Tu es 🤖 Assurbot🤖, un assistant en assurance automobile. Réponds de manière concise et précise.
 
-Instructions :
-- Utilise **Markdown** pour formater tes réponses.
-- Structure tes réponses avec des titres, des listes et des tableaux si nécessaire.
-- Sois concis et précis dans tes réponses.
-- Si la question est vague, demande des clarifications.
-- Utilise les documents fournis pour répondre de manière factuelle.
+        Historique des conversations :
+        {history_str}
 
-Voici l'historique des conversations précédentes :
-{history_str}
+        Contenu des documents clients :
+        {client_docs_text}
 
-Voici les contenus extraits des documents clients :
-{client_docs_text}
+        Contenu des documents Google Docs :
+        {docs_text}
 
-Voici les contenus des documents Google Docs :
-{docs_text}
-
-Question : {user_question}
-"""
-
-        # Initialiser le modèle Gemini
+        Question : {user_question}
+        """
         model = GenerativeModel(model_name=model)
-        
-        # Générer la réponse
-        response = model.generate_content(prompt)
-        
-        # Retourner la réponse générée
+        response = model.generate_content(prompt, max_tokens=500)  # Limiter la réponse
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
@@ -438,7 +422,7 @@ def main():
                 file_bytes = uploaded_file.read()
                 extracted_text = extract_text_with_textract(file_bytes)
                 client_docs_text += f"\n\n---\n\n{extracted_text}"
-                st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
+                #st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
             
             st.session_state.client_docs_text = client_docs_text
 
@@ -447,11 +431,13 @@ def main():
         user_question = st.text_input("Entrez votre question ici", placeholder="Exemple : Quel est mon type de conduite ?")
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
-                response = query_gemini_with_history(
-                    st.session_state.docs_text,  # Documents Google Docs
-                    st.session_state.client_docs_text,  # Documents clients téléversés
+                history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in st.session_state.history[-5:]])  # Limiter l'historique
+                response = query_gemini_with_history_cached(
+                    st.session_state.docs_text[:10000],  # Limiter la taille des documents
+                    st.session_state.client_docs_text[:10000],
                     user_question,
-                    st.session_state.history
+                    history_str,
+                    model="gemini-1.0-pro"  # Utiliser un modèle plus rapide
                 )
             st.session_state.history.insert(0, {"question": user_question, "response": response})
 
