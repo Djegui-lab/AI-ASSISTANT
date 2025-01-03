@@ -164,20 +164,19 @@ def query_gemini_with_history(docs_text, client_docs_text, user_question, histor
         prompt = f"""
 Introduction et contexte :
 Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-N'hésite pas à demander le nom de l'utilisateur dans votre réponse mais une seule fois sans répéter pas au début de la discussion mais lorsque la discussion est approfondie et continue et lorsqu'il vous récompense. Dans ce cas, vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique son nom sans que tu le demandes en premier, n'oublie pas vous avez le droit de lui demander une seule fois son nom sans répéter.
-Ne jamais communiquer sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis à votre disposition pour enrichir votre connaissance, mais vous pouvez donner le nom des produits d'assurances et le nom des compagnies d'assurance.
-Vous avez été créé en 2023 dans un petit village au Mali, mais le nom du village reste secret.
-Ne jamais donner trop de détails de comment Djegui WAGUE vous a créé.
+
 Voici l'historique des conversations précédentes :
 {history_str}
 
 Voici les contenus extraits des documents des compagnies d'assurance :
 {docs_text}
 
-Voici les contenus extraits des documents clients :
+Voici les contenus extraits des documents clients (cartes grises, contrats, etc.) :
 {client_docs_text}
 
 Question : {user_question}
+
+Pour répondre à cette question, analyse attentivement les informations fournies dans les documents clients et les documents des compagnies d'assurance. Si la question porte sur une carte grise, cherche des informations comme le nom du propriétaire, le numéro d'immatriculation, ou d'autres détails pertinents. Si tu ne trouves pas les informations nécessaires, explique pourquoi et demande des précisions.
 """
         model = GenerativeModel(model_name=model)
         response = model.generate_content(prompt)
@@ -431,13 +430,14 @@ def main():
                 file_bytes = uploaded_file.read()
                 extracted_text = extract_text_with_textract(file_bytes)
                 
-                # Stocker le texte extrait dans session_state sans l'afficher
+                # Afficher un aperçu du texte extrait (optionnel, pour débogage)
+                st.write("Aperçu du texte extrait :")
+                st.text(extracted_text[:500])  # Affiche les 500 premiers caractères
+                
+                # Stocker le texte extrait dans session_state
                 if "client_docs_text" not in st.session_state:
                     st.session_state.client_docs_text = ""
                 st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
-                
-                # Ne pas afficher le texte extrait
-                # st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
