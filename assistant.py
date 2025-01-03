@@ -174,6 +174,10 @@ def query_gemini_with_history_cached(docs_text, client_docs_text, user_question,
         if any(keyword in user_question.lower() for keyword in general_keywords):
             return "Je suis désolé, mais je suis spécialisé dans l'assurance automobile. En quoi puis-je vous aider dans ce domaine ?"
 
+        # Gestion des demandes d'assurance
+        if "je cherche une assurance auto" in user_question.lower():
+            return "Je peux vous aider à trouver une assurance auto adaptée à vos besoins. Pour commencer, pourriez-vous me fournir quelques informations de base, comme l'immatriculation de votre véhicule et votre usage principal (privé, professionnel, etc.) ?"
+
         # Sinon, vérifier les documents pour une réponse précise
         prompt = f"""
         Tu es 🤖 Assurbot🤖, un assistant spécialisé en assurance automobile. Ton rôle est de fournir des réponses **claires, précises et structurées**. Suis attentivement les instructions ci-dessous pour répondre à la question de l'utilisateur.
@@ -200,7 +204,7 @@ def query_gemini_with_history_cached(docs_text, client_docs_text, user_question,
         ### Instructions :
         1. **Base-toi sur les documents fournis** :
            - Si la réponse se trouve dans les documents, cite directement les extraits pertinents.
-           - Si les documents ne contiennent pas la réponse, utilise tes connaissances générales pour répondre.
+           - Si les documents ne contiennent pas la réponse, propose à l'utilisateur de contacter la compagnie concernée.
 
         2. **Structure ta réponse** :
            - Utilise des **listes à puces** pour les informations multiples.
