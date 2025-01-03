@@ -159,7 +159,7 @@ def logout():
 
 # Fonction pour interroger Gemini avec cache
 @lru_cache(maxsize=100)
-def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-2.0-flash-exp"):
+def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-1.0-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         prompt = f"""
@@ -177,8 +177,11 @@ def query_gemini_with_history_cached(docs_text, client_docs_text, user_question,
         Question : {user_question}
         """
         model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt, max_tokens=500)  # Limiter la réponse
-        return response.text.strip()
+        response = model.generate_content(prompt)  # Retirer max_tokens
+        response_text = response.text.strip()
+        if len(response_text) > 500:  # Limiter la réponse à 500 caractères
+            response_text = response_text[:500] + "..."
+        return response_text
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
 
@@ -422,7 +425,7 @@ def main():
                 file_bytes = uploaded_file.read()
                 extracted_text = extract_text_with_textract(file_bytes)
                 client_docs_text += f"\n\n---\n\n{extracted_text}"
-                #st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
+                # st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
             
             st.session_state.client_docs_text = client_docs_text
 
