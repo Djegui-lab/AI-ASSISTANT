@@ -156,8 +156,7 @@ def logout():
     st.session_state.user_email = None
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
-
-# Interroger Gemini avec l'historique des interactions
+    
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
@@ -183,11 +182,10 @@ Question : {user_question}
 Pour répondre à cette question, analyse attentivement les informations fournies dans les documents clients et les documents des compagnies d'assurance. Si la question porte sur une carte grise, cherche des informations comme le nom du propriétaire, le numéro d'immatriculation, ou d'autres détails pertinents. Si tu ne trouves pas les informations nécessaires, explique pourquoi et demande des précisions.
 """
         model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt, max_tokens=150)  # Limite la réponse à 150 tokens
+        response = model.generate_content(prompt)  # Retirez max_tokens ici
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
-
 # Lister les fichiers dans un dossier Google Drive
 def list_files_in_folder(folder_id, drive_service):
     """Liste les fichiers dans un dossier Google Drive."""
