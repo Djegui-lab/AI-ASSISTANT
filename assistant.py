@@ -9,72 +9,38 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
-import boto3
+import boto3  # Pour interagir avec AWS Textract
 import requests  # Pour faire des appels HTTP à l'API Hugging Face
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
 
-# Clé API Hugging Face
+# Constantes pour les variables d'environnement
+FIREBASE_JSON = os.getenv("FIREBASE_JSON")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-mnli"
-
-# Fonction pour classifier la question avec Hugging Face Inference API
-def classify_question_with_huggingface(question):
-    """Classifie la question en utilisant Hugging Face Inference API."""
-    headers = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
-    payload = {
-        "inputs": question,
-        "parameters": {"candidate_labels": ["client", "company", "comparison"]}
-    }
-    try:
-        response = requests.post(HUGGINGFACE_API_URL, headers=headers, json=payload)
-        response.raise_for_status()  # Vérifie les erreurs HTTP
-        result = response.json()
-        st.write(f"Scores de confiance : {dict(zip(result['labels'], result['scores']))}")  # Afficher les scores
-        return result["labels"][0]  # Retourne la classe prédite
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Erreur lors de l'appel à Hugging Face API : {e}")
-        return "comparison"  # Retourne une valeur par défaut en cas d'erreur
-
-# Fonction pour demander le feedback utilisateur
-def ask_user_feedback(question, predicted_class):
-    """Demande à l'utilisateur de confirmer ou de corriger la classification."""
-    st.write(f"Question : {question}")
-    st.write(f"Classification prédite : {predicted_class}")
-    
-    # Afficher un radio bouton pour le feedback
-    feedback = st.radio("La classification est-elle correcte ?", ["Oui", "Non"], key=f"feedback_{question}")
-    
-    # Si l'utilisateur clique sur "Non", afficher un selectbox pour corriger la classification
-    if feedback == "Non":
-        corrected_class = st.selectbox("Corriger la classification :", ["client", "company", "comparison"], key=f"corrected_class_{question}")
-        return corrected_class
-    return predicted_class
-
-# Fonction pour journaliser les erreurs
-def log_classification_error(question, predicted_class, corrected_class):
-    """Journalise les erreurs de classification."""
-    log_message = f"Question : {question} | Prédiction : {predicted_class} | Correction : {corrected_class}"
-    logging.info(log_message)
+GOOGLE_APPLICATION_CREDENTIALS_JSON = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "eu-central-1")
 
 # Initialisation de Firebase
 def initialize_firebase():
     """Initialise Firebase avec les données de configuration."""
-    firebase_json_content = os.environ.get("firebasejson")
-    if not firebase_json_content:
-        st.error("La variable d'environnement 'firebasejson' n'est pas définie.")
+    if not FIREBASE_JSON:
+        st.error("La variable d'environnement 'FIREBASE_JSON' n'est pas définie.")
         return False
 
     try:
-        firebasejson = json.loads(firebase_json_content)
+        firebasejson = json.loads(FIREBASE_JSON)
         if not firebase_admin._apps:
             cred = credentials.Certificate(firebasejson)
             firebase_admin.initialize_app(cred)
             logging.info("Firebase initialisé avec succès.")
         return True
     except json.JSONDecodeError:
-        st.error("Le contenu de 'firebasejson' n'est pas un JSON valide.")
+        st.error("Le contenu de 'FIREBASE_JSON' n'est pas un JSON valide.")
     except Exception as e:
         st.error(f"Erreur lors de l'initialisation de Firebase : {str(e)}")
     return False
@@ -82,7 +48,7 @@ def initialize_firebase():
 # Charger la liste des e-mails autorisés
 def load_authorized_emails():
     """Charge la liste des e-mails autorisés depuis les variables d'environnement."""
-    authorized_emails = os.environ.get("AUTHORIZED_EMAILS", "").split(",")
+    authorized_emails = os.getenv("AUTHORIZED_EMAILS", "").split(",")
     return [email.strip() for email in authorized_emails if email.strip()]
 
 # Valider la complexité du mot de passe
@@ -200,89 +166,15 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
-# Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
-    """Interroge Gemini avec l'historique des interactions."""
-    try:
-        history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history[-5:]])  # Limiter l'historique
-        prompt = f"""
-Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine.
-Voici l'historique des conversations précédentes :
-{history_str}
-
-Voici les contenus extraits des documents clients :
-{client_docs_text}
-
-Voici les contenus des documents Google Docs :
-{docs_text}
-
-Question : {user_question}
-"""
-        model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"Erreur lors de l'interrogation de Gemini : {e}"
-
-# Lister les fichiers dans un dossier Google Drive
-def list_files_in_folder(folder_id, drive_service):
-    """Liste les fichiers dans un dossier Google Drive."""
-    try:
-        results = drive_service.files().list(
-            q=f"'{folder_id}' in parents",
-            fields="files(id, name, mimeType)"
-        ).execute()
-        return results.get("files", [])
-    except Exception as e:
-        st.error(f"Erreur lors de la récupération des fichiers : {e}")
-        return []
-
-# Extraire le texte d'un document Google Docs
-def get_google_doc_text(doc_id, docs_service):
-    """Extrait le texte d'un document Google Docs."""
-    try:
-        document = docs_service.documents().get(documentId=doc_id).execute()
-        text_content = ""
-        for element in document.get("body", {}).get("content", []):
-            if "paragraph" in element:
-                for text_run in element.get("paragraph", {}).get("elements", []):
-                    if "textRun" in text_run:
-                        text_content += text_run["textRun"]["content"]
-        return text_content.strip()
-    except Exception as e:
-        return f"Erreur lors de la lecture du document Google Docs : {e}"
-
-# Charger les documents depuis plusieurs dossiers Google Drive
-def load_documents(folder_ids, drive_service, docs_service):
-    """Charge les documents depuis plusieurs dossiers Google Drive."""
-    if not st.session_state.docs_text:
-        docs_text = ""
-        for folder_id in folder_ids:
-            files = list_files_in_folder(folder_id, drive_service)
-            if files:
-                st.write(f"Compagnies détectés 😊✨🕵️")
-                for file in files:
-                    if file["mimeType"] == "application/vnd.google-apps.document":
-                        doc_text = get_google_doc_text(file["id"], docs_service)
-                        docs_text += f"\n\n---\n\n{doc_text}"
-                    else:
-                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
-            else:
-                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
-        if docs_text:
-            st.session_state.docs_text = docs_text
-            st.success("Service validation✅.")
-
-# Fonction pour extraire le texte avec Amazon Textract
+# Extraire le texte avec Amazon Textract
 def extract_text_with_textract(file_bytes):
     """Extrait le texte d'un fichier avec Amazon Textract."""
     try:
         textract_client = boto3.client(
             "textract",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=os.getenv("AWS_REGION", "eu-central-1"),
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_REGION,
         )
         response = textract_client.detect_document_text(Document={"Bytes": file_bytes})
         text = ""
@@ -292,6 +184,89 @@ def extract_text_with_textract(file_bytes):
         return text.strip()
     except Exception as e:
         return f"Erreur lors de l'extraction du texte avec Textract : {e}"
+
+# Classifier la question
+def classify_question(question):
+    """Classifie la question pour déterminer le type de réponse à générer."""
+    if "type de conduite" in question.lower():
+        return "type_conduite"
+    elif "crm" in question.lower():
+        return "crm"
+    elif "sinistre" in question.lower():
+        return "sinistres"
+    elif "carte grise" in question.lower():
+        return "carte_grise"
+    elif "éligibilité" in question.lower():
+        return "eligibilite"
+    else:
+        return "general"
+
+# Générer une réponse structurée
+def generate_structured_response(question_type, data):
+    """Génère une réponse structurée en fonction du type de question."""
+    if question_type == "type_conduite":
+        return """
+🚗 **Type de conduite :**
+- 👤 Conducteur unique (si un seul conducteur est désigné).
+- 👥 Multi-Conducteurs (si plusieurs conducteurs sont désignés).
+"""
+    elif question_type == "crm":
+        crm_value = data.get("crm", 0.85)  # Exemple de valeur
+        status = "🟢 Bonusé" if crm_value < 1 else "🔴 Malusé" if crm_value > 1 else "🟡 Jeune assuré"
+        return f"""
+🎯 **CRM :**
+🎯 CRM	📊 Statut
+{crm_value}	{status}"""
+    elif question_type == "sinistres":
+        sinistres = data.get("sinistres", [])
+        sinistres_table = "| 📅 Date       | 🚨 Nature   | 🎯 Responsabilité | 🔍 Détails          |\n"
+        sinistres_table += "|---------------|-------------|-------------------|--------------------|\n"
+        for sinistre in sinistres:
+            sinistres_table += f"| {sinistre['date']} | {sinistre['nature']} | {sinistre['responsabilite']} | {sinistre['details']} |\n"
+        return f"""
+🚨 **Sinistres déclarés :**
+ {sinistres_table}"""
+    elif question_type == "carte_grise":
+        info = data.get("carte_grise", {})
+        return f"""
+📜 **Informations de la carte grise :**
+        🏷️ Code	📋 Description	🔍 Valeur
+J.1	Genre national ou catégorie	{info.get('J.1', 'N/A')}
+J.2	Carrosserie	{info.get('J.2', 'N/A')}
+D.1	Marque du véhicule	{info.get('D.1', 'N/A')}
+D.3	Modèle du véhicule	{info.get('D.3', 'N/A')}
+S.1	Nombre de places assises	{info.get('S.1', 'N/A')}
+P.3	Type de carburant	{info.get('P.3', 'N/A')}
+P.6	Puissance fiscale	{info.get('P.6', 'N/A')}
+"""
+    elif question_type == "eligibilite":
+        eligibilite = data.get("eligibilite", True)  # Exemple de valeur
+        status = "✅ Oui" if eligibilite else "❌ Non"
+        return f"""
+📋 **Éligibilité du client :**
+- {status}
+"""
+    else:
+        return "Je ne comprends pas la question. Pouvez-vous reformuler ?"
+
+# Interroger Gemini avec l'historique des interactions
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history):
+    """Interroge Gemini avec l'historique des interactions."""
+    try:
+        # Classifier la question
+        question_type = classify_question(user_question)
+        
+        # Générer une réponse structurée
+        data = {
+            "crm": 0.85,  # Exemple de données
+            "sinistres": [{"date": "12/03/2023", "nature": "💥 Matériel", "responsabilite": "[████░░░░░░] 50%", "details": "Dommages au pare-chocs"}],
+            "carte_grise": {"J.1": "VP", "J.2": "Berline", "D.1": "Renault", "D.3": "Clio", "S.1": "5", "P.3": "Essence", "P.6": "5"},
+            "eligibilite": True
+        }
+        response = generate_structured_response(question_type, data)
+        return response
+    except Exception as e:
+        return f"Erreur lors de l'interrogation de Gemini : {e}"
 
 # Interface utilisateur
 def main():
@@ -423,40 +398,6 @@ def main():
 
         st.title("🚗 Assistant Courtier en Assurance Auto")
 
-        # Initialisation des services Google
-        SCOPES = [
-            "https://www.googleapis.com/auth/drive.readonly",
-            "https://www.googleapis.com/auth/documents.readonly",
-        ]
-        SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
-        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
-        if not SERVICE_ACCOUNT_JSON:
-            st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
-            st.stop()
-
-        try:
-            google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
-            credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
-            drive_service = build("drive", "v3", credentials=credentials)
-            docs_service = build("docs", "v1", credentials=credentials)
-            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
-            st.success("🤖 Assurbot initialisé 🚀 avec succès !")
-        except json.JSONDecodeError:
-            st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
-            st.stop()
-        except Exception as e:
-            st.error(f"Erreur lors de l'initialisation des services Google : {e}")
-            st.stop()
-
-        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
-        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
-        if not folder_ids:
-            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
-            st.stop()
-
-        load_documents(folder_ids, drive_service, docs_service)
-
         # Section pour téléverser les documents clients
         st.header("📄 Téléversez les documents des clients")
         uploaded_files = st.file_uploader(
@@ -467,35 +408,16 @@ def main():
             client_docs_text = ""
             for uploaded_file in uploaded_files:
                 st.write(f"### Fichier : {uploaded_file.name}")
-                
-                # Extraire le texte avec Amazon Textract
                 file_bytes = uploaded_file.read()
                 extracted_text = extract_text_with_textract(file_bytes)
                 client_docs_text += f"\n\n---\n\n{extracted_text}"
                 st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
-            
             st.session_state.client_docs_text = client_docs_text
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
         user_question = st.text_input("Entrez votre question ici")
         if st.button("Envoyer la question"):
-            # Classifier la question
-            predicted_class = classify_question_with_huggingface(user_question)
-            final_class = ask_user_feedback(user_question, predicted_class)
-            
-            # Journaliser les erreurs
-            if final_class != predicted_class:
-                log_classification_error(user_question, predicted_class, final_class)
-            
-            # Adapter les documents en fonction de la classification
-            if final_class == "client":
-                docs_text = ""  # Ne pas utiliser les documents des compagnies
-            elif final_class == "company":
-                client_docs_text = ""  # Ne pas utiliser les documents clients
-            else:  # "comparison" ou "both"
-                pass  # Utiliser les deux types de documents
-            
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
                     st.session_state.docs_text,  # Documents Google Docs
