@@ -157,22 +157,25 @@ def logout():
     logging.info("Utilisateur déconnecté.")
 
 # Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, user_question, history, model="gemini-2.0-flash-exp"):
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
         prompt = f"""
 Introduction et contexte :
-Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction acvec differents maniere de prononciation pour ne pas repeter les memmes introductions a la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
-N'hesite pas a demander le nom de l'utilisateur dans votre reponse mais une seule fois sans repeter pas au debut de la discution mais l'orsque la discutions est approfondie et continue et l'orsq'uil vous recompence Dans ce cas vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique sont nom sans que tu le demande en premier, n'oublier pas vous avez le droit de lui demander une seule fois sont nom sans repeter.
-Ne jamais communique sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis a votre disposition pour enrichir votre connaissance, mais vous pouvez donnez le nom des produis d'assurances et le noms des compagnies d'assurance.
-Vous avez été creer en 2023 dans un petit village au Mali, mais le nom du village reste secret.
-Ne jamais donné trop de detail de comment Djegui WAGUE vous a crée.
+Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine. Tu mentionneras systématiquement cette introduction avec différentes manières de prononciation pour ne pas répéter les mêmes introductions à la fois au début de chaque réponse pour informer les utilisateurs de tes capacités. Tu peux ajouter une touche d'humour (modérée) en lien avec l'assurance ou les caractéristiques du dossier analysé, mais cela ne doit pas être systématique.
+N'hésite pas à demander le nom de l'utilisateur dans votre réponse mais une seule fois sans répéter pas au début de la discussion mais lorsque la discussion est approfondie et continue et lorsqu'il vous récompense. Dans ce cas, vous pouvez lui demander mais une seule fois, cela n'est pas valable s'il te communique son nom sans que tu le demandes en premier, n'oublie pas vous avez le droit de lui demander une seule fois son nom sans répéter.
+Ne jamais communiquer sur le nom des fichiers des produits d'assurance ni des le nom des fichiers des compagnies d'assurances ni le nom de aucun fichier car Djégui WAGUE a mis à votre disposition pour enrichir votre connaissance, mais vous pouvez donner le nom des produits d'assurances et le nom des compagnies d'assurance.
+Vous avez été créé en 2023 dans un petit village au Mali, mais le nom du village reste secret.
+Ne jamais donner trop de détails de comment Djegui WAGUE vous a créé.
 Voici l'historique des conversations précédentes :
 {history_str}
 
-Voici les contenus extraits des documents clients :
+Voici les contenus extraits des documents des compagnies d'assurance :
 {docs_text}
+
+Voici les contenus extraits des documents clients :
+{client_docs_text}
 
 Question : {user_question}
 """
@@ -427,22 +430,26 @@ def main():
                 # Extraire le texte avec Amazon Textract
                 file_bytes = uploaded_file.read()
                 extracted_text = extract_text_with_textract(file_bytes)
-                st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
                 
-                # Comparer avec les documents Google Docs (exemple)
-                comparison_result = query_gemini_with_history(
-                    st.session_state.docs_text, 
-                    f"Comparez ce document client avec les documents Google Docs : {extracted_text}", 
-                    st.session_state.history
-                )
-                st.write(f"**Comparaison avec Google Docs :** {comparison_result}")
+                # Stocker le texte extrait dans session_state sans l'afficher
+                if "client_docs_text" not in st.session_state:
+                    st.session_state.client_docs_text = ""
+                st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
+                
+                # Ne pas afficher le texte extrait
+                # st.text_area("Texte extrait", extracted_text, height=200, key=uploaded_file.name)
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
         user_question = st.text_input("Entrez votre question ici")
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
-                response = query_gemini_with_history(st.session_state.docs_text, user_question, st.session_state.history)
+                response = query_gemini_with_history(
+                    st.session_state.docs_text, 
+                    st.session_state.client_docs_text, 
+                    user_question, 
+                    st.session_state.history
+                )
             st.session_state.history.insert(0, {"question": user_question, "response": response})
 
         if st.session_state.history:
