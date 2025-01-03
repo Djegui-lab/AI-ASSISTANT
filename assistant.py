@@ -159,7 +159,7 @@ def logout():
 
 # Fonction pour interroger Gemini avec cache
 @lru_cache(maxsize=100)
-def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-1.0-pro"):
+def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         prompt = f"""
