@@ -162,8 +162,21 @@ def logout():
 def query_gemini_with_history_cached(docs_text, client_docs_text, user_question, history_str, model="gemini-1.0-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
+        # Réponses rapides pour les salutations et questions générales
+        if user_question.lower().strip() in ["bonjour", "salut", "hello", "hi", "coucou"]:
+            return "Bonjour ! Je suis 🤖 Assurbot🤖, votre assistant en assurance automobile. Comment puis-je vous aider aujourd'hui ?"
+        
+        if user_question.lower().strip() in ["comment ça va", "ça va", "comment vas-tu"]:
+            return "Je vais bien, merci ! 😊 En quoi puis-je vous aider concernant votre assurance automobile ?"
+
+        # Si la question est générale ou ne semble pas liée à l'assurance, répondre rapidement
+        general_keywords = ["temps", "météo", "blague", "rigoler", "amusant"]
+        if any(keyword in user_question.lower() for keyword in general_keywords):
+            return "Je suis désolé, mais je suis spécialisé dans l'assurance automobile. En quoi puis-je vous aider dans ce domaine ?"
+
+        # Sinon, vérifier les documents pour une réponse précise
         prompt = f"""
-        Tu es 🤖 Assurbot🤖, un assistant spécialisé en assurance automobile. Ton rôle est de fournir des réponses **claires, précises et structurées** en te basant sur les documents fournis. Suis attentivement les instructions ci-dessous pour répondre à la question de l'utilisateur.
+        Tu es 🤖 Assurbot🤖, un assistant spécialisé en assurance automobile. Ton rôle est de fournir des réponses **claires, précises et structurées**. Suis attentivement les instructions ci-dessous pour répondre à la question de l'utilisateur.
 
         ---
 
@@ -185,26 +198,16 @@ def query_gemini_with_history_cached(docs_text, client_docs_text, user_question,
         ---
 
         ### Instructions :
-        1. **Réponds de manière concise et précise** :
-           - Évite les phrases trop longues ou les informations superflues.
-           - Va droit au but tout en restant complet.
+        1. **Base-toi sur les documents fournis** :
+           - Si la réponse se trouve dans les documents, cite directement les extraits pertinents.
+           - Si les documents ne contiennent pas la réponse, utilise tes connaissances générales pour répondre.
 
-        2. **Base-toi sur les documents fournis** :
-           - Si la réponse est explicitement mentionnée dans les documents, cite directement les extraits pertinents.
-           - Si les documents ne contiennent pas la réponse, indique-le clairement.
-
-        3. **Structure ta réponse** :
+        2. **Structure ta réponse** :
            - Utilise des **listes à puces** pour les informations multiples.
            - Organise les réponses complexes en **paragraphes courts** ou avec des **sous-titres**.
-           - Si la réponse nécessite une explication détaillée, utilise une structure logique (ex : "1. Principe, 2. Application, 3. Exemple").
 
-        4. **Si la réponse n'est pas disponible** :
-           - Indique clairement que les informations ne sont pas trouvées dans les documents.
-           - Propose à l'utilisateur de contacter sa compagnie d'assurance pour plus de détails.
-
-        5. **Adopte un ton professionnel et poli** :
-           - Utilise un langage courtois et adapté à un contexte professionnel.
-           - Évite les formulations trop techniques sans explication.
+        3. **Sois professionnel et poli** :
+           - Adopte un ton courtois et adapté à un contexte professionnel.
 
         ---
 
