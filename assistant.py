@@ -156,7 +156,8 @@ def logout():
     st.session_state.user_email = None
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
-    
+
+# Interroger Gemini avec l'historique des interactions
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
@@ -167,6 +168,11 @@ def query_gemini_with_history(docs_text, client_docs_text, user_question, histor
         prompt = f"""
 Introduction et contexte :
 Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et créé par DJEGUI WAGUE. Ton objectif est de fournir des analyses claires, précises et structurées, tout en continuant à apprendre pour devenir un expert dans ce domaine.
+
+**Instructions supplémentaires :**
+- Utilise des emojis pertinents pour rendre tes réponses plus visuelles et engageantes.
+- Utilise du Markdown pour formater tes réponses (par exemple, **gras**, *italique*, listes à puces, etc.).
+- Adapte ton style en fonction du contexte (par exemple, utilise des emojis joyeux pour des bonnes nouvelles, des emojis sérieux pour des informations importantes, etc.).
 
 Voici l'historique des conversations précédentes :
 {history_str}
@@ -182,10 +188,11 @@ Question : {user_question}
 Pour répondre à cette question, analyse attentivement les informations fournies dans les documents clients et les documents des compagnies d'assurance. Si la question porte sur une carte grise, cherche des informations comme le nom du propriétaire, le numéro d'immatriculation, ou d'autres détails pertinents. Si tu ne trouves pas les informations nécessaires, explique pourquoi et demande des précisions.
 """
         model = GenerativeModel(model_name=model)
-        response = model.generate_content(prompt)  # Retirez max_tokens ici
+        response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
+
 # Lister les fichiers dans un dossier Google Drive
 def list_files_in_folder(folder_id, drive_service):
     """Liste les fichiers dans un dossier Google Drive."""
@@ -253,6 +260,21 @@ def extract_text_with_textract(file_bytes):
         return text.strip()
     except Exception as e:
         return f"Erreur lors de l'extraction du texte avec Textract : {e}"
+
+# Fonction pour traiter un fichier téléversé
+def process_file(uploaded_file):
+    """Traite un fichier téléversé et extrait son texte."""
+    try:
+        # Lire le fichier téléversé
+        file_bytes = uploaded_file.read()
+        
+        # Extraire le texte avec Amazon Textract
+        extracted_text = extract_text_with_textract(file_bytes)
+        
+        # Retourner le texte extrait
+        return extracted_text
+    except Exception as e:
+        return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
 
 # Interface utilisateur
 def main():
@@ -426,8 +448,10 @@ def main():
 
         if uploaded_files:
             with ThreadPoolExecutor() as executor:
+                # Traiter les fichiers en parallèle
                 extracted_texts = list(executor.map(process_file, uploaded_files))
             
+            # Ajouter les textes extraits à l'état de la session
             for extracted_text in extracted_texts:
                 if "client_docs_text" not in st.session_state:
                     st.session_state.client_docs_text = ""
