@@ -201,10 +201,7 @@ def query_gemini_with_history_cached(docs_text, client_docs_text, user_question,
 
         ---
 
-        ### Instructions :
-        1. **Base-toi sur les documents fournis** :
-           - Si la réponse se trouve dans les documents, cite directement les extraits pertinents.
-           - Si les documents ne contiennent pas la réponse, propose à l'utilisateur de contacter la compagnie concernée.
+       
 
         2. **Structure ta réponse** :
            - Utilise des **listes à puces** pour les informations multiples.
