@@ -11,7 +11,6 @@ from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3  # Pour Amazon Textract
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -174,15 +173,19 @@ Tu es 🤖 Assurbot🤖 , un assistant en assurance automobile entraîné et cr�
 - Utilise des emojis pertinents pour rendre tes réponses plus visuelles et engageantes.
 - Utilise du Markdown pour formater tes réponses (par exemple, **gras**, *italique*, listes à puces, etc.).
 - Adapte ton style en fonction du contexte (par exemple, utilise des emojis joyeux pour des bonnes nouvelles, des emojis sérieux pour des informations importantes, etc.).
-- Ne mentionne jamais explicitement les documents fournis par l'utilisateur. Base-toi sur tes connaissances générales et les conditions actuelles des compagnies d'assurance.
-- Si la question nécessite des informations spécifiques, demande poliment à l'utilisateur de fournir plus de détails.
 
 Voici l'historique des conversations précédentes :
 {history_str}
 
+Voici les contenus extraits des documents des compagnies d'assurance :
+{docs_text}
+
+Voici les contenus extraits des documents clients (cartes grises, contrats, etc.) :
+{client_docs_text}
+
 Question : {user_question}
 
-Pour répondre à cette question, utilise tes connaissances sur les compagnies d'assurance et les conditions actuelles. Si la question nécessite des informations spécifiques, demande poliment à l'utilisateur de fournir plus de détails.
+Pour répondre à cette question, analyse attentivement les informations fournies dans les documents clients et les documents des compagnies d'assurance. Si la question porte sur une carte grise, cherche des informations comme le nom du propriétaire, le numéro d'immatriculation, ou d'autres détails pertinents. Si tu ne trouves pas les informations nécessaires, explique pourquoi et demande des précisions.
 """
         model = GenerativeModel(model_name=model)
         response = model.generate_content(prompt)
@@ -455,7 +458,7 @@ def main():
                 st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
 
         # Section pour poser des questions
-        st.header("❓ Posez une question sur les assurances")
+        st.header("❓ Posez une question sur les documents")
         user_question = st.text_input("Entrez votre question ici")
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
