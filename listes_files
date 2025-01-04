@@ -220,6 +220,89 @@ def speak_response(response):
     engine.say(response)
     engine.runAndWait()
 
+# Lister les fichiers dans un dossier Google Drive
+def list_files_in_folder(folder_id, drive_service):
+    """Liste les fichiers dans un dossier Google Drive."""
+    try:
+        results = drive_service.files().list(
+            q=f"'{folder_id}' in parents",
+            fields="files(id, name, mimeType)"
+        ).execute()
+        return results.get("files", [])
+    except Exception as e:
+        st.error(f"Erreur lors de la récupération des fichiers : {e}")
+        return []
+
+# Extraire le texte d'un document Google Docs
+def get_google_doc_text(doc_id, docs_service):
+    """Extrait le texte d'un document Google Docs."""
+    try:
+        document = docs_service.documents().get(documentId=doc_id).execute()
+        text_content = ""
+        for element in document.get("body", {}).get("content", []):
+            if "paragraph" in element:
+                for text_run in element.get("paragraph", {}).get("elements", []):
+                    if "textRun" in text_run:
+                        text_content += text_run["textRun"]["content"]
+        return text_content.strip()
+    except Exception as e:
+        return f"Erreur lors de la lecture du document Google Docs : {e}"
+
+# Charger les documents depuis plusieurs dossiers Google Drive
+def load_documents(folder_ids, drive_service, docs_service):
+    """Charge les documents depuis plusieurs dossiers Google Drive."""
+    if not st.session_state.docs_text:
+        docs_text = ""
+        for folder_id in folder_ids:
+            files = list_files_in_folder(folder_id, drive_service)
+            if files:
+                st.write(f"Compagnies détectés 😊✨🕵️")
+                for file in files:
+                    if file["mimeType"] == "application/vnd.google-apps.document":
+                        doc_text = get_google_doc_text(file["id"], docs_service)
+                        docs_text += f"\n\n---\n\n{doc_text}"
+                    else:
+                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
+            else:
+                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
+        if docs_text:
+            st.session_state.docs_text = docs_text
+            st.success("Service validation✅.")
+
+# Fonction pour extraire le texte avec Amazon Textract
+def extract_text_with_textract(file_bytes):
+    """Extrait le texte d'un fichier avec Amazon Textract."""
+    try:
+        textract_client = boto3.client(
+            "textract",
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION", "eu-central-1"),
+        )
+        response = textract_client.detect_document_text(Document={"Bytes": file_bytes})
+        text = ""
+        for item in response["Blocks"]:
+            if item["BlockType"] == "LINE":
+                text += item["Text"] + "\n"
+        return text.strip()
+    except Exception as e:
+        return f"Erreur lors de l'extraction du texte avec Textract : {e}"
+
+# Fonction pour traiter un fichier téléversé
+def process_file(uploaded_file):
+    """Traite un fichier téléversé et extrait son texte."""
+    try:
+        # Lire le fichier téléversé
+        file_bytes = uploaded_file.read()
+        
+        # Extraire le texte avec Amazon Textract
+        extracted_text = extract_text_with_textract(file_bytes)
+        
+        # Retourner le texte extrait
+        return extracted_text
+    except Exception as e:
+        return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
+
 # Interface utilisateur
 def main():
     """Fonction principale pour l'interface utilisateur."""
