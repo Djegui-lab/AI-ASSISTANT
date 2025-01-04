@@ -11,8 +11,6 @@ from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3  # Pour Amazon Textract
 from concurrent.futures import ThreadPoolExecutor
-import speech_recognition as sr  # Pour la reconnaissance vocale
-import pyttsx3  # Pour la synthèse vocale
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -134,8 +132,6 @@ def initialize_session_state():
         st.session_state.docs_text = ""
     if "client_docs_text" not in st.session_state:
         st.session_state.client_docs_text = ""
-    if "user_responses" not in st.session_state:
-        st.session_state.user_responses = {}  # Stocker les réponses de l'utilisateur
 
 # Connexion de l'utilisateur
 def login(email, password):
@@ -196,29 +192,6 @@ Pour répondre à cette question, analyse attentivement les informations fournie
         return response.text.strip()
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
-
-# Fonction pour capturer la voix de l'utilisateur
-def capture_voice_input():
-    """Capture la voix de l'utilisateur et la convertit en texte."""
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Parlez maintenant...")
-        audio = recognizer.listen(source)
-        try:
-            text = recognizer.recognize_google(audio, language="fr-FR")
-            st.session_state.user_question = text
-            st.write(f"Vous avez dit : {text}")
-        except sr.UnknownValueError:
-            st.error("Je n'ai pas compris ce que vous avez dit.")
-        except sr.RequestError:
-            st.error("Le service de reconnaissance vocale est indisponible.")
-
-# Fonction pour lire une réponse à voix haute
-def speak_response(response):
-    """Lit une réponse à voix haute."""
-    engine = pyttsx3.init()
-    engine.say(response)
-    engine.runAndWait()
 
 # Lister les fichiers dans un dossier Google Drive
 def list_files_in_folder(folder_id, drive_service):
@@ -486,9 +459,7 @@ def main():
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
-        user_question = st.text_input("Entrez votre question ici", key="user_question")
-        if st.button("Activer la saisie vocale"):
-            capture_voice_input()
+        user_question = st.text_input("Entrez votre question ici")
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
@@ -498,7 +469,6 @@ def main():
                     st.session_state.history
                 )
             st.session_state.history.insert(0, {"question": user_question, "response": response})
-            speak_response(response)  # Lire la réponse à voix haute
 
         # Affichage de l'historique des interactions
         if st.session_state.history:
