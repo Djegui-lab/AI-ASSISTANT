@@ -11,6 +11,8 @@ from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3  # Pour Amazon Textract
 from concurrent.futures import ThreadPoolExecutor
+import speech_recognition as sr  # Pour la reconnaissance vocale
+import pyttsx3  # Pour la synthèse vocale
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -132,6 +134,8 @@ def initialize_session_state():
         st.session_state.docs_text = ""
     if "client_docs_text" not in st.session_state:
         st.session_state.client_docs_text = ""
+    if "user_responses" not in st.session_state:
+        st.session_state.user_responses = {}  # Stocker les réponses de l'utilisateur
 
 # Connexion de l'utilisateur
 def login(email, password):
@@ -193,88 +197,28 @@ Pour répondre à cette question, analyse attentivement les informations fournie
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
 
-# Lister les fichiers dans un dossier Google Drive
-def list_files_in_folder(folder_id, drive_service):
-    """Liste les fichiers dans un dossier Google Drive."""
-    try:
-        results = drive_service.files().list(
-            q=f"'{folder_id}' in parents",
-            fields="files(id, name, mimeType)"
-        ).execute()
-        return results.get("files", [])
-    except Exception as e:
-        st.error(f"Erreur lors de la récupération des fichiers : {e}")
-        return []
+# Fonction pour capturer la voix de l'utilisateur
+def capture_voice_input():
+    """Capture la voix de l'utilisateur et la convertit en texte."""
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.write("Parlez maintenant...")
+        audio = recognizer.listen(source)
+        try:
+            text = recognizer.recognize_google(audio, language="fr-FR")
+            st.session_state.user_question = text
+            st.write(f"Vous avez dit : {text}")
+        except sr.UnknownValueError:
+            st.error("Je n'ai pas compris ce que vous avez dit.")
+        except sr.RequestError:
+            st.error("Le service de reconnaissance vocale est indisponible.")
 
-# Extraire le texte d'un document Google Docs
-def get_google_doc_text(doc_id, docs_service):
-    """Extrait le texte d'un document Google Docs."""
-    try:
-        document = docs_service.documents().get(documentId=doc_id).execute()
-        text_content = ""
-        for element in document.get("body", {}).get("content", []):
-            if "paragraph" in element:
-                for text_run in element.get("paragraph", {}).get("elements", []):
-                    if "textRun" in text_run:
-                        text_content += text_run["textRun"]["content"]
-        return text_content.strip()
-    except Exception as e:
-        return f"Erreur lors de la lecture du document Google Docs : {e}"
-
-# Charger les documents depuis plusieurs dossiers Google Drive
-def load_documents(folder_ids, drive_service, docs_service):
-    """Charge les documents depuis plusieurs dossiers Google Drive."""
-    if not st.session_state.docs_text:
-        docs_text = ""
-        for folder_id in folder_ids:
-            files = list_files_in_folder(folder_id, drive_service)
-            if files:
-                st.write(f"Compagnies détectés 😊✨🕵️")
-                for file in files:
-                    if file["mimeType"] == "application/vnd.google-apps.document":
-                        doc_text = get_google_doc_text(file["id"], docs_service)
-                        docs_text += f"\n\n---\n\n{doc_text}"
-                    else:
-                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
-            else:
-                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
-        if docs_text:
-            st.session_state.docs_text = docs_text
-            st.success("Service validation✅.")
-
-# Fonction pour extraire le texte avec Amazon Textract
-def extract_text_with_textract(file_bytes):
-    """Extrait le texte d'un fichier avec Amazon Textract."""
-    try:
-        textract_client = boto3.client(
-            "textract",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=os.getenv("AWS_REGION", "eu-central-1"),
-        )
-        response = textract_client.detect_document_text(Document={"Bytes": file_bytes})
-        text = ""
-        for item in response["Blocks"]:
-            if item["BlockType"] == "LINE":
-                text += item["Text"] + "\n"
-        return text.strip()
-    except Exception as e:
-        return f"Erreur lors de l'extraction du texte avec Textract : {e}"
-
-# Fonction pour traiter un fichier téléversé
-def process_file(uploaded_file):
-    """Traite un fichier téléversé et extrait son texte."""
-    try:
-        # Lire le fichier téléversé
-        file_bytes = uploaded_file.read()
-        
-        # Extraire le texte avec Amazon Textract
-        extracted_text = extract_text_with_textract(file_bytes)
-        
-        # Retourner le texte extrait
-        return extracted_text
-    except Exception as e:
-        return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
+# Fonction pour lire une réponse à voix haute
+def speak_response(response):
+    """Lit une réponse à voix haute."""
+    engine = pyttsx3.init()
+    engine.say(response)
+    engine.runAndWait()
 
 # Interface utilisateur
 def main():
@@ -459,7 +403,9 @@ def main():
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
-        user_question = st.text_input("Entrez votre question ici")
+        user_question = st.text_input("Entrez votre question ici", key="user_question")
+        if st.button("Activer la saisie vocale"):
+            capture_voice_input()
         if st.button("Envoyer la question"):
             with st.spinner("Interrogation 🤖Assurbot..."):
                 response = query_gemini_with_history(
@@ -469,6 +415,7 @@ def main():
                     st.session_state.history
                 )
             st.session_state.history.insert(0, {"question": user_question, "response": response})
+            speak_response(response)  # Lire la réponse à voix haute
 
         # Affichage de l'historique des interactions
         if st.session_state.history:
