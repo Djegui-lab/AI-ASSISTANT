@@ -158,7 +158,7 @@ def logout():
     logging.info("Utilisateur déconnecté.")
 
 # Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-1.5-flash"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Convertir l'historique en une chaîne de caractères
