@@ -299,10 +299,20 @@ def process_file(uploaded_file):
     try:
         # Lire le fichier téléversé
         file_bytes = uploaded_file.read()
-        
-        # Extraire le texte avec Amazon Textract
-        extracted_text = extract_text_with_textract(file_bytes)
-        
+
+        # Vérifier la taille du fichier (limite à 5 Mo)
+        if len(file_bytes) > 5 * 1024 * 1024:  # 5 Mo
+            return "⚠️ Le fichier est trop volumineux. Veuillez téléverser un fichier de moins de 5 Mo."
+
+        # Afficher un spinner pendant l'extraction
+        with st.spinner("Extraction du texte en cours..."):
+            extracted_text = extract_text_with_textract(file_bytes)
+
+        # Vérifier si l'extraction a réussi
+        if "Erreur" in extracted_text:
+            st.error(extracted_text)  # Afficher l'erreur
+            return None
+
         # Retourner le texte extrait
         return extracted_text
     except Exception as e:
