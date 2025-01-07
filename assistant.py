@@ -158,6 +158,17 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
+# Calculer la mise à jour du CRM
+def calculate_crm_update(ri_date, crm_value):
+    """Calcule si le CRM est à jour en fonction de la date d'édition du RI et de la date d'aujourd'hui."""
+    today = datetime.now()
+    ri_date = datetime.strptime(ri_date, "%d/%m/%Y")
+    delta = today - ri_date
+    if delta.days > 90:  # 3 mois = 90 jours
+        return f"⚠️ Le CRM de {crm_value} est daté du {ri_date.strftime('%d/%m/%Y')} et n'est donc pas à jour. Un RI plus récent (daté de moins de 3 mois) est nécessaire."
+    else:
+        return f"✅ Le CRM de {crm_value} est à jour (émis le {ri_date.strftime('%d/%m/%Y')})."
+
 # Interroger Gemini avec l'historique des interactions
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-1.5-flash"):
     """Interroge Gemini avec l'historique des interactions."""
