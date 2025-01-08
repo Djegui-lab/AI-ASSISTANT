@@ -236,6 +236,9 @@ Le CRM est actualisé une fois par an, généralement à la date anniversaire du
 #### **6. Verifie les documents des clients:**
     ** Kbis, RI, tous autre documents**: en appliquant la règle des 90 jours et si les date d'edition des documents depasse 90 jours alors cest pas a jours sinon si inferieurs a 90 jours alors cest a jours en te basant sur ca pour verifier si les documents sont a jours sachant que la date d'aujourd'hui est ({date_aujourdhui})
     ** Kbis**: si cest pour une assurance VTC, alors verifie bien le Kbis si c'est noté dans le champs d'activité: "Transport de voyageur par TAXI  ou vehicule de transport avec chauffeurs afin de validé le KBIS pour un chauffeur VTC , cette logique est valble pour tout autre demande d'assurance proffessionnelle tel que livreur de repas , transport de marchandise etc ,donc chaque activité doit correspondre a la demande de  du type d'assurance specifique.
+    * Kbis**: Mme si la date de creation d'une activité est superieurs ou inferieur alors cette durée n'a aucun lien avec l'exeperience de conduite d'un chaffeur VTC? LE CHAUFFEUR doit systematique prouver son anncienneté de 12 mois d'assurance auto pour VTC car cest pas forcement que tu as une societé créee depuis 24 mois que tu a vraiment une exeperience de 24 mois , cependant certains propietaire de societé ou entreprise crée leurs societé sans etre assuré cest un point clé a ne pas oublier.
+
+
 ---
 
 ### **Règles strictes :**  
