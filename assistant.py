@@ -266,28 +266,28 @@ Le coefficient bonus-malus (CRM) est utilisé pour ajuster le coût de l'assuran
    - Date de résiliation : 30 septembre 2023 (9 mois).
    - Durée d’assurance : 9 mois (insuffisante pour bénéficier de la réduction de 5 %).
    - Calcul :  
-     \( \text{CRM} = 1.00 \) (pas de réduction).  
+     \( \text(CRM) = 1.00 \) (pas de réduction).  
    - **Nouveau CRM : 1.00**.
 
 2. **Exemple 2 : Résiliation après 10 mois sans sinistre**
    - Date de résiliation : 31 octobre 2023 (10 mois).
    - Durée d’assurance : 10 mois (suffisante pour bénéficier de la réduction de 5 %).
    - Calcul :  
-     \( \text{CRM} = 1.00 \times 0.95 = 0.95 \) (réduction de 5 %).  
+     \( \text(CRM) = 1.00 \times 0.95 = 0.95 \) (réduction de 5 %).  
    - **Nouveau CRM : 0.95**.
 
 3. **Exemple 3 : Résiliation après 9 mois avec un sinistre entièrement responsable**
    - Date de résiliation : 30 septembre 2023 (9 mois).
    - Sinistre déclaré : Février 2023 (entièrement responsable).
    - Calcul :  
-     \( \text{CRM} = 1.00 \times 1.25 = 1.25 \) (majoration de 25 %).  
+     \( \text(CRM) = 1.00 \times 1.25 = 1.25 \) (majoration de 25 %).  
    - **Nouveau CRM : 1.25**.
 
 4. **Exemple 4 : Résiliation après 10 mois avec un sinistre partiellement responsable**
    - Date de résiliation : 31 octobre 2023 (10 mois).
    - Sinistre déclaré : Février 2023 (partiellement responsable).
    - Calcul :  
-     \( \text{CRM} = 1.00 \times 1.125 = 1.125 \) (majoration de 12,5 %).  
+     \( \text(CRM) = 1.00 \times 1.125 = 1.125 \) (majoration de 12,5 %).  
    - **Nouveau CRM : 1.125**.
 
 **Instructions pour Assurbot :**
