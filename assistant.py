@@ -353,7 +353,7 @@ Le coefficient bonus-malus (CRM) est utilisé pour ajuster le coût de l'assuran
      
 **Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**
 Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de resiliation si disponible au CRM calculé et la  date d'aujourd'hui ({date_aujourdhui}) deux dates. La communication doit inclure :
-1. La phrase : *"Suite au calcul effectué ce jour date d'aujourd'hui ({date_aujourdhui}), le CRM actuel du client est de [valeur du CRM], associez toujours la date de resiliation si disponible au CRM calculé et la d'aujourd'hui ({date_aujourdhui}) deux dates ."*
+1. La phrase : *"Suite au calcul effectué le CRM a la date de resiliation est ,et le CRM du client pour une nouvelle souscription aujourdhui  ({date_aujourdhui}) est et precise la date réel d'aujourdhui ({date_aujourdhui}) pour le courtier."*
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.
 3. Une mention claire de l'utilisation du CRM pour une nouvelle souscription ou une mise à jour du contrat.
 
