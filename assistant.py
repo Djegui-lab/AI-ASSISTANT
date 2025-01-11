@@ -296,7 +296,6 @@ Le coefficient bonus-malus (CRM) est utilisé pour ajuster le coût de l'assuran
 - Date de souscription : 1ᵉʳ janvier 2023
 - Date d'échéance : 31 décembre 2023
 - Période de référence : Du 1ᵉʳ novembre 2022 au 31 octobre 2023
-- CRM initial : 1.00
 
 **Cas de figure :**
 1. **Aucun sinistre responsable** :
