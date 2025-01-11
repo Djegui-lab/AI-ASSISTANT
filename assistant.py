@@ -365,6 +365,7 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
 
 - **Relevé d'information (RI) :*
   - Trie les RI du client **du plus ancien au plus récent**.  
+  -  Affiche les analyses des RI en tableau avec des effets vraiment joli des makdown des puces correspondant pour une belle visuelle.
   - Commence le calcul du CRM en utilisant le **RI le plus ancien** comme point de départ.  
   - Applique les règles de réduction/majoration année par année, en te basant sur les sinistres responsables et les périodes sans sinistre.  
   - Continue le calcul jusqu'à la date d'aujourd'hui ({date_aujourdhui}) ou jusqu'à la date de résiliation si le contrat a été résilié.  
