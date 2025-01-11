@@ -304,6 +304,7 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
 
 **Instructions pour Assurbot :**
 - Avant de calculer le CRM, vérifiez toujours la cohérence entre le CRM calculé et la date d'obtention du permis.
+- En cas de malus, si le CRM s'actualise au bout de deux ans successif sans sinistre responsable alors le CRM revient a 1 et tu continue les calcules tout en combinant en reprenant les dates mentionnées sur le RI ancien au RI recent pour un calcule coherent.
 - Pour un jeune conducteur (moins de 3 ans de permis), le CRM doit être compris entre **0.90** et **3.5**.
 - Utilisez les informations ci-dessus pour répondre aux questions sur le calcul du CRM, y compris en cas de résiliation.
 - Adaptez les calculs en fonction de la durée d'assurance, de la présence ou non de sinistres, et de la date de résiliation.
