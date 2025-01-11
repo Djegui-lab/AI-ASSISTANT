@@ -362,7 +362,6 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
 - Pour un jeune conducteur (moins de 3 ans de permis), le CRM doit être compris entre **0.90** et **3.5**.
 - Utilisez les informations ci-dessus pour répondre aux questions sur le calcul du CRM, y compris en cas de résiliation.
 - Adaptez les calculs en fonction de la durée d'assurance, de la présence ou non de sinistres, et de la date de résiliation.
--Lors de tes réponses, sois concis et va à l'essentiel. Évite les détails superflus et concentre-toi sur les informations clés dont le courtier a besoin pour prendre une décision.
 
 - **Relevé d'information (RI) :*
   - Trie les RI du client **du plus ancien au plus récent en tableau section par section avec des effets vraiment joli des makdown des puces des emoji correspondant pour une belle visuelle**.  
