@@ -351,8 +351,8 @@ Le coefficient bonus-malus (CRM) est utilisé pour ajuster le coût de l'assuran
      *"Suite à l'analyse, une incohérence a été détectée. Le client a seulement 2 ans de permis, mais le CRM calculé est de 0.85. Pour un jeune conducteur, le CRM doit être compris entre 0.90 et 3.5. Cela n'est pas réaliste sans une justification spécifique (ex. : transfert de CRM depuis un autre assureur). Veuillez vérifier les informations fournies et corriger les données avant de poursuivre le calcul."*
      
 **Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**
-Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de resiliation si disponible au CRM calculé et la  date d'aujourd'hui ({date_aujourdhui}) deux dates. La communication doit inclure :
-1. La phrase : *"Suite au calcul effectué le CRM a la date de resiliation est ,et le CRM du client pour une nouvelle souscription aujourdhui  ({date_aujourdhui})"*
+Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de resiliation si disponible au CRM calculé a la date d'aujourd'hui ({date_aujourdhui}) sans que tu actualise le CRM a nouveau sauf si possible l'actualisation. La communication doit inclure :
+1. La phrase : *"Suite au calcul effectué le CRM a la date de resiliation est ,et le CRM du client pour une nouvelle souscription aujourdhui ({date_aujourdhui} sans que tu actualise le CRM a nouveau sauf si possible l'actualisation "*
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.
 3. Une mention claire de l'utilisation du CRM pour une nouvelle souscription ou une mise à jour du contrat.
 
