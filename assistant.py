@@ -9,9 +9,9 @@ from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
-import boto3
+import boto3  # Pour Amazon Textract
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime  # Ajout pour la gestion des dates
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -128,7 +128,7 @@ def initialize_session_state():
         st.session_state.logged_in = False
         st.session_state.user_email = None
     if "history" not in st.session_state:
-        st.session_state.history = []
+        st.session_state.history = []  # Historique des interactions
     if "docs_text" not in st.session_state:
         st.session_state.docs_text = ""
     if "client_docs_text" not in st.session_state:
@@ -139,7 +139,7 @@ def login(email, password):
     """Gère la connexion de l'utilisateur."""
     try:
         user = auth.get_user_by_email(email)
-        if user.email == email:
+        if user.email == email:  # Simulez une validation du mot de passe ici si nécessaire
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success(f"Connecté en tant que {email}")
@@ -158,15 +158,30 @@ def logout():
     st.success("Déconnexion réussie.")
     logging.info("Utilisateur déconnecté.")
 
+# Calculer la mise à jour du CRM
+def calculate_crm_update(ri_date, crm_value):
+    """Calcule si le CRM est à jour en fonction de la date d'édition du RI et de la date d'aujourd'hui."""
+    today = datetime.now()
+    ri_date = datetime.strptime(ri_date, "%d/%m/%Y")
+    delta = today - ri_date
+    if delta.days > 90:  # 3 mois = 90 jours
+        return f"⚠️ Le CRM de {crm_value} est daté du {ri_date.strftime('%d/%m/%Y')} et n'est donc pas à jour. Un RI plus récent (daté de moins de 3 mois) est nécessaire."
+    else:
+        return f"✅ Le CRM de {crm_value} est à jour (émis le {ri_date.strftime('%d/%m/%Y')})."
+
 # Interroger Gemini avec l'historique des interactions
 def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-exp-1206"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
+        # Convertir l'historique en une chaîne de caractères
         history_str = "\n".join([f"Q: {h['question']}\nR: {h['response']}" for h in history])
+        
+        # Obtenir la date d'aujourd'hui
         date_aujourdhui = datetime.now().strftime("%d/%m/%Y")
+        
+        # Construire le prompt avec l'historique et la date d'aujourd'hui
         prompt = f"""
 **System message**
-
 ### **Rôle :**  
 Je suis 🤖 **Assurbot** 🤖, une assistance intelligente pour courtiers en assurance, entraînée et créée par **DJEGUI WAGUE**. Mon rôle est d'aider les courtiers à déterminer si un client est éligible aux conditions de souscription des produits d'assurance, en proposant les meilleures garanties, formules et options adaptées aux besoins du client.  
 
@@ -299,6 +314,8 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
 
 ---
 
+---
+
 ### **Historique des conversations :**  
 {history_str}  
 
@@ -317,7 +334,56 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
     except Exception as e:
         return f"Erreur lors de l'interrogation de Gemini : {e}"
 
-# Extraire le texte avec Amazon Textract
+# Lister les fichiers dans un dossier Google Drive
+def list_files_in_folder(folder_id, drive_service):
+    """Liste les fichiers dans un dossier Google Drive."""
+    try:
+        results = drive_service.files().list(
+            q=f"'{folder_id}' in parents",
+            fields="files(id, name, mimeType)"
+        ).execute()
+        return results.get("files", [])
+    except Exception as e:
+        st.error(f"Erreur lors de la récupération des fichiers : {e}")
+        return []
+
+# Extraire le texte d'un document Google Docs
+def get_google_doc_text(doc_id, docs_service):
+    """Extrait le texte d'un document Google Docs."""
+    try:
+        document = docs_service.documents().get(documentId=doc_id).execute()
+        text_content = ""
+        for element in document.get("body", {}).get("content", []):
+            if "paragraph" in element:
+                for text_run in element.get("paragraph", {}).get("elements", []):
+                    if "textRun" in text_run:
+                        text_content += text_run["textRun"]["content"]
+        return text_content.strip()
+    except Exception as e:
+        return f"Erreur lors de la lecture du document Google Docs : {e}"
+
+# Charger les documents depuis plusieurs dossiers Google Drive
+def load_documents(folder_ids, drive_service, docs_service):
+    """Charge les documents depuis plusieurs dossiers Google Drive."""
+    if not st.session_state.docs_text:
+        docs_text = ""
+        for folder_id in folder_ids:
+            files = list_files_in_folder(folder_id, drive_service)
+            if files:
+                st.write(f"Compagnies détectés 😊✨🕵️")
+                for file in files:
+                    if file["mimeType"] == "application/vnd.google-apps.document":
+                        doc_text = get_google_doc_text(file["id"], docs_service)
+                        docs_text += f"\n\n---\n\n{doc_text}"
+                    else:
+                        st.warning(f"Type de fichier non pris en charge : {file['name']}")
+            else:
+                st.warning(f"Aucun fichier trouvé dans le dossier {folder_id}.")
+        if docs_text:
+            st.session_state.docs_text = docs_text
+            st.success("Service validation✅.")
+
+# Fonction pour extraire le texte avec Amazon Textract
 def extract_text_with_textract(file_bytes):
     """Extrait le texte d'un fichier avec Amazon Textract."""
     try:
@@ -336,27 +402,31 @@ def extract_text_with_textract(file_bytes):
     except Exception as e:
         return f"Erreur lors de l'extraction du texte avec Textract : {e}"
 
-# Traiter un fichier téléversé
+# Fonction pour traiter un fichier téléversé
 def process_file(uploaded_file):
     """Traite un fichier téléversé et extrait son texte."""
     try:
+        # Lire le fichier téléversé
         file_bytes = uploaded_file.read()
-        if len(file_bytes) > 5 * 1024 * 1024:
+
+        # Vérifier la taille du fichier (limite à 5 Mo)
+        if len(file_bytes) > 5 * 1024 * 1024:  # 5 Mo
             return "⚠️ Le fichier est trop volumineux. Veuillez téléverser un fichier de moins de 5 Mo."
 
+        # Afficher un spinner pendant l'extraction
         with st.spinner("Extraction du texte en cours..."):
             extracted_text = extract_text_with_textract(file_bytes)
 
+        # Vérifier si l'extraction a réussi
         if "Erreur" in extracted_text:
-            st.error(extracted_text)
+            st.error(extracted_text)  # Afficher l'erreur
             return None
 
-        return f"**Fichier : {uploaded_file.name}**\n\n{extracted_text}"
+        # Retourner le texte extrait
+        return extracted_text
     except Exception as e:
         return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
-
-
-
+        
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -446,6 +516,8 @@ def main():
         unsafe_allow_html=True,
     )
 
+
+
     initialize_session_state()
     authorized_emails = load_authorized_emails()
 
@@ -477,6 +549,40 @@ def main():
 
         st.title("🚗 Assistant Courtier en Assurance Auto")
 
+        # Initialisation des services Google
+        SCOPES = [
+            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/documents.readonly",
+        ]
+        SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+        GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+        if not SERVICE_ACCOUNT_JSON:
+            st.error("La variable d'environnement 'GOOGLE_APPLICATION_CREDENTIALS_JSON' est manquante ou vide.")
+            st.stop()
+
+        try:
+            google_credentials = json.loads(SERVICE_ACCOUNT_JSON)
+            credentials = service_account.Credentials.from_service_account_info(google_credentials, scopes=SCOPES)
+            drive_service = build("drive", "v3", credentials=credentials)
+            docs_service = build("docs", "v1", credentials=credentials)
+            configure(api_key=GEMINI_API_KEY)  # Initialiser Gemini
+            st.success("🤖 Assurbot initialisé 🚀 avec succès !")
+        except json.JSONDecodeError:
+            st.error("Le contenu de la variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' n'est pas un JSON valide.")
+            st.stop()
+        except Exception as e:
+            st.error(f"Erreur lors de l'initialisation des services Google : {e}")
+            st.stop()
+
+        folder_ids = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "").split(",")
+        folder_ids = [folder_id.strip() for folder_id in folder_ids if folder_id.strip()]
+        if not folder_ids:
+            st.error("La variable d'environnement 'GOOGLE_DRIVE_FOLDER_ID' n'est pas définie ou est vide.")
+            st.stop()
+
+        load_documents(folder_ids, drive_service, docs_service)
+
         # Section pour téléverser les documents clients
         st.header("📄 Téléversez les documents des clients")
         uploaded_files = st.file_uploader(
@@ -485,12 +591,14 @@ def main():
 
         if uploaded_files:
             with ThreadPoolExecutor() as executor:
+                # Traiter les fichiers en parallèle
                 extracted_texts = list(executor.map(process_file, uploaded_files))
             
-            st.session_state.client_docs_text = ""
+            # Ajouter les textes extraits à l'état de la session
             for extracted_text in extracted_texts:
-                if extracted_text:
-                    st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
+                if "client_docs_text" not in st.session_state:
+                    st.session_state.client_docs_text = ""
+                st.session_state.client_docs_text += f"\n\n---\n\n{extracted_text}"
 
         # Section pour poser des questions
         st.header("❓ Posez une question sur les documents")
