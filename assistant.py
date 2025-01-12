@@ -436,7 +436,6 @@ Si le relevé d'information est a jour, Quel que soit le scénario (résiliation
 5. Avant de calculer le CRM, il est impératif de vérifier la cohérence entre le CRM calculé et la date d'obtention du permis de conduire. Un CRM de 0,85 pour un conducteur ayant seulement 2 ans de permis, par exemple, serait incohérent et nécessiterait une vérification.
 Si le relevé d'information n'est pas a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé continue l'actualisation jusqua la date d'edition du relevé d'information si disponible. La communication doit inclure :  
 6. La phrase :  **"Suite au calcul effectué le Relvevé d'information du client n'est pas a jour, le calcule du CRM pourrait etre erroné, le CRM à la date de résiliation est [valeur], et le CRM du client a la date d'edition du RI est [valeur]."**  
-### ** Attention** affiche le calcule du CRM dans des tableaux  a puce avec des emoji makdown pour chaque section du calcule du CM et en dessous des commentaire pour l'explication.
 ---
 
 Voici une mise à jour de vos instructions pour inclure l'attention nécessaire concernant la **descente rapide** en cas de **deux années sans sinistre responsable** :
