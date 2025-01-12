@@ -368,7 +368,7 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
   - Commence le calcul du CRM en utilisant le **RI le plus ancien** comme point de départ.  
   - Applique les règles de réduction/majoration année par année, en te basant sur les sinistres responsables et les périodes sans sinistre.  
   - Continue le calcul jusqu'à la date d'aujourd'hui ({date_aujourdhui}) ou jusqu'à la date de résiliation si le contrat a été résilié.  
-        **Contexte :**
+ **Contexte :**
         Si le client a **plusieurs RI** (par exemple, provenant de différentes compagnies d'assurance ou pour plusieurs véhicules), combinez les calculs de la durée d'assurance successive en utilisant chaque RI **séparément**. Ensuite, continuez les calculs en combinant les informations des RI anciens et récents pour un calcul cohérent du CRM.
         
         **Règles à suivre :**
@@ -384,19 +384,30 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
              - **XYZ** utilise le CRM de **ABC** (0,85) comme point de départ pour le calcul du nouveau CRM.
         
         3. **Durée d'assurance successive** :
-           - Combinez les durées d'assurance des différents RI pour calculer le CRM final.
-           - Assurez-vous que les périodes d'assurance se suivent sans interruption.
+           - **Continuez le calcul de la durée d'assurance en cumulant les nombres de mois** entre les différents contrats.
+           - Exemple :  
+             - Si un client a assuré un véhicule pendant 12 mois chez ABC, puis 12 mois chez XYZ, la durée totale d'assurance est de **24 mois**.
+        
+        4. **Calcul du CRM** :
+           - Appliquez les règles du CRM (réduction de 5 % après 1 an sans sinistre, majoration de 25 % pour un sinistre responsable, etc.) en tenant compte de la durée totale d'assurance cumulée.
         
         **Exemple concret :**
         - **RI 1 (ABC)** :
           - Date de souscription : 01/03/2020
           - CRM initial : 1,00
           - CRM à mars 2021 : 0,85 (après 1 an sans sinistre)
+          - Durée d'assurance : 12 mois
         - **RI 2 (XYZ)** :
           - Date de souscription : 01/03/2021
           - CRM initial : 0,85 (transfert depuis ABC)
           - CRM à mars 2022 : 0,85 × 0,95 = 0,8075 (après 1 an sans sinistre)
+          - Durée d'assurance : 12 mois
+        - **Durée totale d'assurance** : 24 mois (12 mois chez ABC + 12 mois chez XYZ)
 
+**Instructions pour le modèle :**
+- Lorsque vous analysez plusieurs RI, combinez les durées d'assurance en cumulant les nombres de mois.
+- Utilisez le CRM de l'ancienne compagnie comme point de départ pour la nouvelle souscription.
+- Assurez-vous que les calculs successifs du CRM suivent une logique claire et cohérente.
 **Instructions pour le modèle :**
 - Lorsque vous analysez plusieurs RI, combinez les durées d'assurance et les CRM de manière cohérente.
 - Utilisez le CRM de l'ancienne compagnie comme point de départ pour la nouvelle souscription.
