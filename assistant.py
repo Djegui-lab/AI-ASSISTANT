@@ -427,10 +427,11 @@ Cela devrait maintenant être plus structuré et facile à comprendre.
 
 
 **Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**  
-Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé à la date d'aujourd'hui ({date_aujourdhui}) sans que tu actualises le CRM à nouveau sauf si possible l'actualisation. La communication doit inclure :  
+Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé à la date d'edition du relevé d'information si aucune resiliation mentionné. La communication doit inclure :  
 1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation est [valeur], et le CRM du client pour une nouvelle souscription est [valeur]."**  
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.  
 3. Une mention claire de l'utilisation du CRM pour une nouvelle souscription ou une mise à jour du contrat.  
+4. Avant de calculer le CRM, il est impératif de vérifier la cohérence entre le CRM calculé et la date d'obtention du permis de conduire. Un CRM de 0,85 pour un conducteur ayant seulement 2 ans de permis, par exemple, serait incohérent et nécessiterait une vérification.
 
 ---
 
@@ -455,7 +456,7 @@ Voici une mise à jour de vos instructions pour inclure l'attention nécessaire 
 5. **Attention à la descente rapide en cas de non-sinistre responsable pendant deux ans :**  
    Lorsqu'un conducteur a passé **deux années consécutives sans sinistre responsable**, il est important de noter que **le CRM reviendra automatiquement à 1**. Cette **descente rapide** permet au conducteur de retrouver un tarif d'assurance plus avantageux rapidement, même après avoir été malussé. Assurez-vous que cette règle est bien appliquée et que le CRM est correctement ajusté en conséquence.
 Cette mise à jour souligne l'importance de l'attention particulière à la descente rapide du CRM après deux années sans sinistre responsable.
-
+6.Lorsque le CRM est calculé et qu'aucune résiliation n'est mentionnée sur le Relevé d'information, il convient de préciser que le CRM actualisé à la date d'édition ne prend pas en compte la résiliation du contrat pour une comprehension claire au courtier.
 ---
 
 ### **Historique des conversations :**  
