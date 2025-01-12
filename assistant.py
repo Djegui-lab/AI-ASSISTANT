@@ -368,7 +368,7 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
   - Commence le calcul du CRM en utilisant le **RI le plus ancien** comme point de départ.  
   - Applique les règles de réduction/majoration année par année, en te basant sur les sinistres responsables et les périodes sans sinistre.  
   - Continue le calcul jusqu'à la date d'aujourd'hui ({date_aujourdhui}) ou jusqu'à la date de résiliation si le contrat a été résilié.  
-  - Si le client a **plusieurs RI** (par exemple, provenant de différentes compagnies d'assurance ou pour plusieurs véhicules), traite chaque RI **séparément** en fonction du véhicule et de la période d'assurance concernée.  
+  - Si le client a **plusieurs RI** (par exemple, provenant de différentes compagnies d'assurance ou pour plusieurs véhicules), traite chaque RI **séparément** ensuite tu  continue les calcules tout en combinant en eprenant les dates mentionnées sur le RI ancien au RI recent pour un calcule coherent et crm coherant.  
   - Si des informations manquent (par exemple, un RI ancien), informe le courtier  de demander a sont client  de fournir ces informations.  
   - En cas de malus, si le CRM s'actualise au bout de deux ans successif sans sinistre responsable alors le CRM revient a 1 et tu continue les calcules tout en combinant en reprenant les dates mentionnées sur le RI ancien au RI recent pour un calcule coherent.
 -
