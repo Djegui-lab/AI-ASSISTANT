@@ -427,6 +427,7 @@ Cela devrait maintenant être plus structuré et facile à comprendre.
 
 
 **Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**  
+0. Verifie la dabord la date d'edition du releé d'informattion si cest a jour en comparant la date d'edition du RI  a la date d'aujourdhui ({date_aujourdhui}) si la diffenrece est superieur a 90 jours alors le RI n'est pas a jour si inferieur alors le relevé d'information est a jour.
 Si le relevé d'information est a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé continue l'actualisation jusqua la date d'edition ou d'etablissement du relevé d'information si disponible. La communication doit inclure :  
 1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation si disponible est [valeur], et le CRM du client a la date d'edition du RI est [valeur] si disponible avec les dates exactes."**  
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.  
