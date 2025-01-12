@@ -170,7 +170,7 @@ def calculate_crm_update(ri_date, crm_value):
         return f"✅ Le CRM de {crm_value} est à jour (émis le {ri_date.strftime('%d/%m/%Y')})."
 
 # Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-exp-1206"):
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-1.5-pro"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Convertir l'historique en une chaîne de caractères
