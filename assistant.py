@@ -355,6 +355,7 @@ def process_file(uploaded_file):
     except Exception as e:
         return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
 
+
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -410,13 +411,14 @@ def main():
             font-size: 16px;
             transition: all 0.3s ease;
             background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            color: black; /* Couleur du texte modifiée pour être visible */
         }
         .stTextInput input:focus {
             border-color: #4CAF50;
             box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
             outline: none;
             background-color: rgba(255, 255, 255, 0.2);
+            color: black; /* Couleur du texte modifiée pour être visible */
         }
         .stSuccess {
             background-color: rgba(212, 237, 218, 0.2);
@@ -443,6 +445,7 @@ def main():
         unsafe_allow_html=True,
     )
 
+   
   
     initialize_session_state()
     authorized_emails = load_authorized_emails()
