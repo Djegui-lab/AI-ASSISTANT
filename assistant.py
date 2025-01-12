@@ -368,42 +368,55 @@ Quel que soit le scénario (résiliation, continuation du contrat, présence ou 
   - Commence le calcul du CRM en utilisant le **RI le plus ancien** comme point de départ.  
   - Applique les règles de réduction/majoration année par année, en te basant sur les sinistres responsables et les périodes sans sinistre.  
   - Continue le calcul jusqu'à la date d'aujourd'hui ({date_aujourdhui}) ou jusqu'à la date de résiliation si le contrat a été résilié.  
- **Contexte :**
-        Si le client a **plusieurs RI** (par exemple, provenant de différentes compagnies d'assurance ou pour plusieurs véhicules), combinez les calculs de la durée d'assurance successive en utilisant chaque RI **séparément**. Ensuite, continuez les calculs en combinant les informations des RI anciens et récents pour un calcul cohérent du CRM.
-        
-        **Règles à suivre :**
-        1. **Combinaison des RI** :
-           - Utilisez chaque RI **séparément** pour déterminer la durée d'assurance et le CRM.
-           - Prenez en compte les dates mentionnées sur le RI ancien pour les relier au RI récent.
-        
-        2. **Calcul cohérent du CRM** :
-           - Si un client change d'assurance, la nouvelle compagnie se base sur le CRM de l'ancienne compagnie pour le calcul de la nouvelle souscription.
-           - Exemple :  
-             - Client assuré chez **ABC** en mars 2020 avec un CRM de 0,85 à mars 2021.  
-             - Il change pour **XYZ** en mars 2021.  
-             - **XYZ** utilise le CRM de **ABC** (0,85) comme point de départ pour le calcul du nouveau CRM.
-        
-        3. **Durée d'assurance successive** :
-           - **Continuez le calcul de la durée d'assurance en cumulant les nombres de mois** entre les différents contrats.
-           - Exemple :  
-             - Si un client a assuré un véhicule pendant 12 mois chez ABC, puis 12 mois chez XYZ, la durée totale d'assurance est de **24 mois**.
-        
-        4. **Calcul du CRM** :
-           - Appliquez les règles du CRM (réduction de 5 % après 1 an sans sinistre, majoration de 25 % pour un sinistre responsable, etc.) en tenant compte de la durée totale d'assurance cumulée.
-        
-        **Exemple concret :**
-        - **RI 1 (ABC)** :
-          - Date de souscription : 01/03/2020
-          - CRM initial : 1,00
-          - CRM à mars 2021 : 0,85 (après 1 an sans sinistre)
-          - Durée d'assurance : 12 mois
-        - **RI 2 (XYZ)** :
-          - Date de souscription : 01/03/2021
-          - CRM initial : 0,85 (transfert depuis ABC)
-          - CRM à mars 2022 : 0,85 × 0,95 = 0,8075 (après 1 an sans sinistre)
-          - Durée d'assurance : 12 mois
-        - **Durée totale d'assurance** : 24 mois (12 mois chez ABC + 12 mois chez XYZ)
+**Contexte :**
+Analysez les relevés d'informations (RI) des clients pour déterminer leur coefficient bonus-malus (CRM). Si le client a **plusieurs RI** (provenant de différentes compagnies d'assurance ou pour plusieurs véhicules), combinez les durées d'assurance et les CRM de manière cohérente.
 
+**Règles à suivre :**
+
+1. **Calcul du CRM :**
+   - **Réduction de 5 %** : Appliquez une réduction de 5 % après **1 an sans sinistre responsable**.
+   - **Majoration de 25 %** : Appliquez une majoration de 25 % pour chaque **sinistre entièrement responsable**.
+   - **Majoration de 12,5 %** : Appliquez une majoration de 12,5 % pour chaque **sinistre partiellement responsable**.
+   - **Arrondi** : Arrondissez le CRM à deux décimales (ex. : 0,95 ou 1,19).
+
+2. **Combinaison des RI :**
+   - Si le client change d'assurance, utilisez le **CRM final de l'ancien contrat** comme CRM initial pour le nouveau contrat.
+   - **Cumulez les durées d'assurance** entre les différents contrats pour calculer le CRM final.
+
+3. **Validation des dates :**
+   - Si la **date d'échéance** n'est pas mentionnée, recherchez une date alternative (ex. : "date d'application").
+   - Si aucune date n'est trouvée, utilisez la **date de souscription** pour déterminer la période de référence.
+
+4. **Communication au courtier :**
+   - Soyez **concis et allez à l'essentiel**.
+   - Fournissez les informations clés :
+     - CRM initial et final pour chaque RI.
+     - Durée totale d'assurance cumulée.
+     - CRM actuel pour une nouvelle souscription.
+   - Expliquez clairement les raisons des variations du CRM (ex. : sinistres responsables).
+
+**Exemple concret :**
+
+1. **RI 1 (ABC)** :
+   - Date de souscription : 01/03/2020
+   - CRM initial : 1,00
+   - CRM à mars 2021 : 0,95 (après 1 an sans sinistre)
+   - Durée d'assurance : 12 mois
+
+2. **RI 2 (XYZ)** :
+   - Date de souscription : 01/03/2021
+   - CRM initial : 0,95 (transfert depuis ABC)
+   - CRM à mars 2022 : 0,95 × 0,95 = 0,9025 ≈ 0,90 (après 1 an sans sinistre)
+   - Durée d'assurance : 12 mois
+
+3. **Conclusion :**
+   - Durée totale d'assurance : 24 mois
+   - CRM actuel (01/03/2022) : 0,90
+
+**Instructions pour le modèle :**
+- Appliquez les règles du CRM de manière cohérente et précise.
+- Combinez les durées d'assurance et les CRM entre les différents RI.
+- Communiquez clairement les résultats au courtier en évitant les détails superflus.
 **Instructions pour le modèle :**
 - Lorsque vous analysez plusieurs RI, combinez les durées d'assurance en cumulant les nombres de mois.
 - Utilisez le CRM de l'ancienne compagnie comme point de départ pour la nouvelle souscription.
