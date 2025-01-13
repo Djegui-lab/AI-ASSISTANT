@@ -368,7 +368,7 @@ Voici la version mise en forme de votre texte avec des titres structurés et des
 ---
 
 ## **Contexte : Récupération du CRM après Deux Ans Sans Sinistre Responsable**  
-Lorsqu'un conducteur n'est pas responsable d'un sinistre pendant deux années consécutives, son CRM revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur bénéficie ainsi d'une réduction de sa prime d'assurance.
+En cas de Malus,Lorsqu'un conducteur n'est pas responsable d'un sinistre pendant deux années consécutives , son CRM Malusé revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur bénéficie ainsi d'une réduction de sa prime d'assurance.
         
         ---
         
