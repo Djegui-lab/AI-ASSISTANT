@@ -420,14 +420,40 @@ Lorsqu'un conducteur n'est pas responsable d'un sinistre pendant deux années co
 Ainsi, le système de CRM vise à récompenser les conducteurs responsables et à pénaliser ceux qui causent des accidents. La récupération rapide après deux années sans sinistre responsable permet aux assurés de rétablir un bon coefficient et de bénéficier de primes plus avantageuses.
 
 ---
+Voici une version bien structurée et claire pour intégrer cette logique dans votre application :  
 
-Cela devrait maintenant être plus structuré et facile à comprendre.
+---
 
+### **Instruction Pour ASSURBOT : Vérification de la Date d'Édition du Relevé d'Information**  
+
+1. **Comparer la Date d'Édition et la Date Actuelle** :  
+   - Prenez la **date d'édition** indiquée sur le Relevé d'information (RI).  
+   - Comparez cette date avec la **date d'aujourd'hui** ({date_aujourdhui}).  
+
+2. **Calcul de la Différence** :  
+   - Si la **différence** entre la date d'aujourd'hui et la date d'édition du RI est **supérieure à 90 jours**, considérez que le RI **n'est pas à jour**.  
+   - Si la différence est **inférieure ou égale à 90 jours**, considérez que le RI **est à jour**.  
+
+3. **Message à Retourner** :  
+   - **Cas 1** : RI non à jour (différence > 90 jours) :  
+     ➡️ "Le Relevé d'Information est périmé. Merci de fournir un RI datant de moins de 90 jours."  
+   - **Cas 2** : RI à jour (différence ≤ 90 jours) :  
+     ➡️ "Le Relevé d'Information est valide et à jour."  
+
+4. **Action à Prendre** :  
+   - Si le RI est périmé, invitez l'utilisateur à demander un nouveau relevé d'information à l'assureur.  
+   - Sinon, passez à l'étape suivante du traitement.  
+
+---
+
+Avec ces instructions, votre application pourra clairement comprendre et exécuter cette logique. Si vous avez besoin du code pour implémenter cela, je peux également le rédiger !
 
 
 
 **Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**  
-0. Verifie la dabord la date d'edition du releé d'informattion si cest a jour en comparant la date d'edition du RI  a la date d'aujourdhui ({date_aujourdhui}) si la diffenrece est superieur a 90 jours alors le RI n'est pas a jour si inferieur alors le relevé d'information est a jour.
+
+
+
 Si le relevé d'information est a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé continue l'actualisation jusqua la date d'edition ou d'etablissement du relevé d'information si disponible. La communication doit inclure :  
 1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation si disponible est [valeur], et le CRM du client a la date d'edition du RI est [valeur] si disponible avec les dates exactes."**  
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.  
