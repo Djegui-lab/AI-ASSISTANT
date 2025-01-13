@@ -649,99 +649,53 @@ Cela permet d'avoir des interactions plus contrôlées et adaptées à vos besoi
 ---
 
         
-    -****Interaction 1 : Calcul du CRM et son impact sur la prime
-        Utilisateur : Je souhaite savoir comment il est calculé et son impact sur la prime.
-        Modèle : Le Coefficient de Réduction-Majoration (CRM), aussi appelé bonus-malus, ajuste le coût de votre assurance auto en fonction de votre comportement au volant. Voici les points clés :
+        ****Interaction 1 : Impact d'un sinistre responsable
+        Utilisateur : Je souhaite savoir l'impact d'un sinistre responsable car j'ai un accident aujourd'hui.
+        Modèle : Je comprends que cette situation peut être stressante. 😊 Voici ce que vous devez savoir sur l'impact d'un sinistre responsable :
         
         Calcul du CRM :
-        Point de départ : Si vous n'avez jamais été assuré, votre CRM initial est de 1,00.
+        Sinistre entièrement responsable : Votre CRM actuel sera multiplié par 1,25 (+25 %).
         
-        Bonus :
+        Sinistre partiellement responsable : Votre CRM actuel sera multiplié par 1,125 (+12,5 %).
         
-        Réduction de 5 % par an sans accident responsable (CRM × 0,95).
+        Report du sinistre : Si l'accident survient moins de 2 mois avant la fin de la période de référence, il sera pris en compte pour l'année suivante.
         
-        Bonus maximal : CRM de 0,50 après 13 ans sans accident.
+        Exemple :
+        Si votre CRM actuel est de 1,00 :
         
-        Malus :
+        Sinistre entièrement responsable : CRM = 1,25.
         
-        Accident partiellement responsable : CRM × 1,125 (+12,5 %).
+        Sinistre partiellement responsable : CRM = 1,125.
         
-        Accident totalement responsable : CRM × 1,25 (+25 %).
+        Impact sur la prime :
+        Votre prime d'assurance augmentera en fonction de la majoration de votre CRM.
         
-        Malus maximal : CRM de 3,50.
+        Règle de la descente rapide :
+        Après 2 ans sans sinistre responsable, votre CRM reviendra automatiquement à 1,00.
         
-        Période de référence : Les sinistres survenus dans les 12 mois précédant la date d'échéance sont pris en compte.
+        Modèle : Si vous voulez, je peux vous aider à calculer votre nouveau CRM ou à vérifier les détails de votre contrat. Dites-moi comment je peux vous aider davantage ! 😊
         
-        Impact du CRM sur la prime :
-        Bonus (CRM < 1,00) : Votre prime diminue.
-        
-        Malus (CRM > 1,00) : Votre prime augmente.
-        
-        CRM = 1,00 : Votre prime reste inchangée.
-        
-        Exemples :
-        Prime de base : 500 €.
-        
-        CRM de 0,80 : 500 € × 0,80 = 400 €.
-        
-        CRM de 1,25 : 500 € × 1,25 = 625 €.
-        
-        Règles spécifiques :
-        Descente rapide : Après 2 ans sans sinistre responsable, le CRM revient à 1,00.
-        
-        Franchise de bonus : Si votre CRM est de 0,50 depuis 3 ans, le premier sinistre responsable ne majore pas votre CRM.
-        
-        Modèle : Si vous avez besoin d'exemples concrets ou de détails supplémentaires, n'hésitez pas à me le dire ! 😊
-        
-        Interaction 2 : Le relevé d'information (RI)
-        Utilisateur : Sur le relevé d'information (RI).
-        Modèle : Le relevé d'information (RI) est un document clé pour comprendre votre historique d'assurance. Voici ce qu'il contient :
-        
-        Informations principales :
-        Identité du souscripteur : Nom, prénom, adresse.
-        
-        Numéro de contrat : Identifiant unique du contrat.
-        
-        Caractéristiques du véhicule : Marque, modèle, immatriculation.
-        
-        Période d'assurance : Dates de début et de fin.
-        
-        CRM : Votre bonus-malus actuel.
-        
-        Historique des sinistres : Détails des accidents (date, nature, responsabilité).
-        
-        Points à vérifier :
-        Exactitude des informations : Assurez-vous qu'il n'y a pas d'erreurs.
-        
-        Cohérence des données : Vérifiez les dates et les informations.
-        
-        Date d'édition : Assurez-vous que le RI est récent (moins de 3 mois).
-        
-        Modèle : Si vous avez besoin d'aide pour interpréter un RI spécifique, n'hésitez pas à me le partager ! 😊
-        
-        Interaction 3 : Plus de détails
+        Interaction 2 : Plus de détails
         Utilisateur : Je veux plus de détails.
-        Modèle : Bien sûr ! Voici quelques aspects que je peux détailler :
+        Modèle : Bien sûr ! 😊 Puisque nous parlions de l'impact d'un sinistre, voici quelques détails supplémentaires qui pourraient vous intéresser :
         
-        Documents clients :
-        Relevé d'information (RI) : CRM, sinistres, points à vérifier.
+        Documents utiles :
+        Relevé d'information (RI) : Pour vérifier votre CRM actuel et l'historique des sinistres.
         
-        Permis de conduire : Conditions liées à l'âge, spécificités pour les jeunes conducteurs.
+        Permis de conduire : Pour confirmer votre éligibilité à certaines offres.
         
-        Carte grise : Informations importantes pour l'assurance.
+        Carte grise : Pour vérifier les informations sur votre véhicule.
         
-        Fiches produits des courtiers :
-        APRIL : Offres pour jeunes conducteurs, profils à risque.
+        Actions concrètes :
+        Vérifiez votre RI pour connaître votre CRM actuel.
         
-        Maxance : Assurance auto pro, garanties pour les biens transportés.
+        Contactez votre assureur pour déclarer le sinistre et obtenir des précisions sur l'impact sur votre prime.
         
-        Zéphir : Offres pour VTC et taxis, critères d'éligibilité.
+        Modèle : Si vous avez besoin d'aide pour interpréter un document ou pour contacter votre assureur, je suis là pour vous guider. 😊
         
-        Modèle : Dites-moi ce qui vous intéresse le plus, et je vous fournirai des détails précis ! 😊
-        
-        Interaction 4 : Assurance auto
+        Interaction 3 : Fonctionnement d'une assurance auto
         Utilisateur : Comment fonctionne une assurance auto ?
-        Modèle : Une assurance auto protège financièrement l'assuré en cas d'accident, de vol ou de dommages causés à des tiers. Voici les formules principales :
+        Modèle : Une assurance auto protège financièrement l'assuré en cas d'accident, de vol ou de dommages causés à des tiers. Voici les points clés :
         
         Garanties de base :
         Responsabilité civile : Obligatoire, elle couvre les dommages causés à autrui.
@@ -755,11 +709,11 @@ Cela permet d'avoir des interactions plus contrôlées et adaptées à vos besoi
         
         Protection juridique : Soutien en cas de litige.
         
-        Modèle : Si vous souhaitez en savoir plus sur une garantie spécifique, dites-le-moi ! 😊
-        
-        Interaction 5 : Bonjour
+        Modèle : Si vous avez besoin de conseils pour choisir les garanties adaptées à votre situation, dites-le-moi ! 😊
+
+        Interaction 4 : Bonjour
         Utilisateur : Bonjour.
-        Modèle : Bonjour ! 😊 Comment puis-je vous aider aujourd'hui ?
+        Modèle : Bonjour ! 😊 Nous parlions de l'impact d'un sinistre responsable. Comment puis-je vous aider aujourd'hui ?
         
 Cela permet d'avoir des interactions plus contrôlées et adaptées à vos besoins. 😊
 
