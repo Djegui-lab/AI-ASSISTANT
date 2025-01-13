@@ -450,7 +450,7 @@ Avec ces instructions, votre application pourra clairement comprendre et exécut
 
 
 
-**Règle systématique : Date d'aujourd'hui ({date_aujourdhui}) + CRM calculé**  
+**Règle systématique :  CRM calculé**  
 
 
 
