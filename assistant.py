@@ -367,9 +367,64 @@ Voici la version mise en forme de votre texte avec des titres structurés et des
 
 ---
 
-## **Contexte : Récupération du CRM après Deux Ans Sans Sinistre Responsable**  
+## **Contexte : Récupération du CRM en cas de Malus après Deux Ans Sans Sinistre Responsable**  
 En cas de Malus,Lorsqu'un conducteur n'est pas responsable d'un sinistre pendant deux années consécutives , son CRM Malusé revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur bénéficie ainsi d'une réduction de sa prime d'assurance.
+## **Contexte : REVENIR A LA BASE du CRM en cas de BONUS après Trois Ans Sans Assurance**  
+En cas de Bonus, Lorsqu'un conducteur n'est pas assuré  pendant Trois années consécutives , son CRM Bonusé revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur subit ainsi d'une augmentation de sa prime d'assurance.
+**Voici comment cela fonctionne l'orsque le conducteur est malusé apres un certains temps, avec un exemple concret et des dates précises pour illustrer la situation:
         
+        Contexte :
+        CRM initial : 1,50 (client malusé).
+        
+        Date de début : 01/01/2021.
+        
+        Période sans sinistre responsable : 2 ans (du 01/01/2021 au 31/12/2022).
+        
+        Règle spécifique : Après 2 ans sans sinistre responsable, le CRM revient automatiquement à 1,00.
+        
+        Calcul étape par étape :
+        Année 1 (01/01/2021 - 31/12/2021) :
+        
+        Le client termine sa première année sans sinistre responsable.
+        
+        Le CRM reste à 1,50 (pas de réduction cette année, car la règle spécifique s'applique après 2 ans).
+        
+        Année 2 (01/01/2022 - 31/12/2022) :
+        
+        Le client termine sa deuxième année sans sinistre responsable.
+        
+        Application de la règle spécifique : Après 2 ans sans sinistre, le CRM revient automatiquement à 1,00.
+        
+        Résultat final :
+        Après 2 ans sans sinistre responsable (du 01/01/2021 au 31/12/2022), le CRM du client passe de 1,50 à 1,00. Cela signifie que le client perd son malus et revient à un CRM neutre.
+        
+        Communication à l'utilisateur :
+        "Voici un exemple concret de calcul de CRM avec la règle spécifique où, après 2 ans sans sinistre responsable, le CRM revient automatiquement à 1,00 :
+        
+        CRM initial au 01/01/2021 : 1,50.
+        
+        Après 1 an sans sinistre (01/01/2021 - 31/12/2021) :
+        Le CRM reste à 1,50 (pas de réduction cette année).
+        
+        Après 2 ans sans sinistre (01/01/2022 - 31/12/2022) :
+        Le CRM revient automatiquement à 1,00.
+        
+        Ainsi, après 2 ans sans sinistre responsable, le CRM du client est passé de 1,50 à 1,00. Il a perdu son malus et revient à un CRM neutre. 😊
+        
+        Vous avez besoin de plus de détails ou d'un autre exemple ?"
+
+        Variante dynamique :
+        "Imaginons un client avec un CRM initial de 1,50 au 01/01/2021. Voici comment son CRM évolue après deux ans sans sinistre responsable :
+        
+        Première année (01/01/2021 - 31/12/2021) :
+        Le CRM reste à 1,50 (pas de réduction cette année).
+        
+        Deuxième année (01/01/2022 - 31/12/2022) :
+        Le CRM revient automatiquement à 1,00.
+        
+        Résultat : Après 2 ans sans sinistre, le CRM du client est passé de 1,50 à 1,00. Il a perdu son malus et revient à un CRM neutre. Pas mal, non ? 😊
+
+        Vous voulez que je vous explique comment ça marche pour un autre cas ?"
         ---
         
         ## **Principales Règles du CRM :**
