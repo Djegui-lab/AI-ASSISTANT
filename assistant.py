@@ -350,81 +350,167 @@ Le coefficient de réduction-majoration (CRM) est utilisé pour ajuster le coût
 
 ---
 
-### **Remarques :**
 
-1. Lors d'une **interruption d'assurance automobile**, le CRM reste généralement inchangé, sauf en cas de transfert de CRM d'un autre assureur.
+
+#### * Introduction :
+        En assurance automobile, les compagnies d'assurance se basent souvent sur la règle des 36 derniers mois pour évaluer l'historique d'assurance d'un conducteur. Cette règle stipule que seuls les 36 derniers mois (soit 3 ans) précédant la date d'aujourd'hui sont pris en compte pour déterminer combien de mois un client a été assuré. Cela permet de simplifier les évaluations et de se concentrer sur l'historique récent du conducteur, que celui-ci ait été assuré pendant 5 ans, 3 ans, ou seulement quelques mois.
+        
+    ** Méthode de calcul pour Assurbot :
+        Données nécessaires :
+        
+        Date de souscription (mentionnée sur le Relevé d'Information - RI).
+        
+        Date de résiliation (si disponible sur le RI).
+        
+        Date d'édition du Relevé d'Information (RI).
+        
+        Date d'aujourd'hui (pour appliquer la règle des 36 derniers mois).
+        
+        Règle des 36 derniers mois :
+        
+        Seuls les 36 derniers mois précédant la date d'aujourd'hui sont pris en compte.
+        
+        Si le client a été assuré pendant plus de 36 mois, seuls les 36 derniers mois sont retenus.
+        
+        Si le client a été assuré pendant moins de 36 mois, le nombre exact de mois est utilisé.
+        
+        Calcul des mois d'assurance :
+        
+        Si la date de résiliation est disponible :
+        
+        Calculer le nombre de mois entre la date de souscription et la date de résiliation.
+        
+        Si la date de résiliation n'est pas disponible :
+        
+        Calculer le nombre de mois entre la date de souscription et la date d'édition du RI.
+        
+        Limiter le calcul aux 36 derniers mois précédant la date d'aujourd'hui.
+        
+        Exemples concrets :
+        Exemple 1 : Client assuré pendant 24 mois sur les 36 derniers mois
+        Date de souscription : 1er janvier 2021.
+        
+        Date de résiliation : 1er janvier 2023.
+        
+        Date d'édition du RI : 1er janvier 2023.
+        
+        Date d'aujourd'hui : 1er octobre 2023.
+        
+        Règle des 36 derniers mois : 1er octobre 2020 au 1er octobre 2023.
+        
+        Mois d'assurance : 24 mois (du 1er janvier 2021 au 1er janvier 2023).
+        
+        Exemple 2 : Client assuré pendant 12 mois sur les 36 derniers mois
+        Date de souscription : 1er janvier 2022.
+        
+        Date de résiliation : 1er janvier 2023.
+        
+        Date d'édition du RI : 1er janvier 2023.
+        
+        Date d'aujourd'hui : 1er octobre 2023.
+        
+        Règle des 36 derniers mois : 1er octobre 2020 au 1er octobre 2023.
+        
+        Mois d'assurance : 12 mois (du 1er janvier 2022 au 1er janvier 2023).
+        
+        Exemple 3 : Client assuré pendant 36 mois sur les 36 derniers mois
+        Date de souscription : 1er octobre 2020.
+        
+        Date de résiliation : Non disponible (toujours assuré).
+        
+        Date d'édition du RI : 1er octobre 2023.
+        
+        Date d'aujourd'hui : 1er octobre 2023.
+        
+        Règle des 36 derniers mois : 1er octobre 2020 au 1er octobre 2023.
+        
+        Mois d'assurance : 36 mois (du 1er octobre 2020 au 1er octobre 2023).
+        
+        Phrases types pour Assurbot :
+        Pour un client assuré pendant 24 mois sur les 36 derniers mois :
+        "En appliquant la règle des 36 derniers mois pour les assurances, le client a été assuré pendant 24 mois. Par exemple, si la date de souscription est le 1er janvier 2021 et la date de résiliation le 1er janvier 2023, le client a été assuré pendant 24 mois sur les 36 derniers mois."
+        
+        Pour un client assuré pendant 12 mois sur les 36 derniers mois :
+        "En appliquant la règle des 36 derniers mois pour les assurances, le client a été assuré pendant 12 mois. Par exemple, si la date de souscription est le 1er janvier 2022 et la date de résiliation le 1er janvier 2023, le client a été assuré pendant 12 mois sur les 36 derniers mois."
+        
+        Pour un client assuré pendant 36 mois sur les 36 derniers mois :
+        "En appliquant la règle des 36 derniers mois pour les assurances, le client a été assuré pendant 36 mois. Par exemple, si la date de souscription est le 1er octobre 2020 et que le client est toujours assuré, il a été assuré pendant 36 mois sur les 36 derniers mois."
+        
+        Tableau récapitulatif :
+        Date de souscription	Date de résiliation	Date d'édition du RI	Date d'aujourd'hui	Mois d'assurance (36 derniers mois)
+        1er janvier 2021	1er janvier 2023	1er janvier 2023	1er octobre 2023	24 mois
+        1er janvier 2022	1er janvier 2023	1er janvier 2023	1er octobre 2023	12 mois
+        1er octobre 2020	Non disponible	1er octobre 2023	1er octobre 2023	36 mois
+        Cas particuliers :
+        Si un client a été assuré successivement pendant 5 ans ou plus, seuls les 36 derniers mois seront pris en compte.
+        
+        Si un client a été assuré pendant moins de 36 mois (par exemple, 9, 12 ou 13 mois), ce nombre exact sera utilisé.
+        
+        Conclusion :
+        La règle des 36 derniers mois pour les assurances permet de simplifier l'évaluation de l'historique d'assurance d'un conducteur en se concentrant sur les 3 dernières années. Cela est particulièrement utile lors de la souscription d'un deuxième véhicule ou d'un changement de compagnie d'assurance.
+        
+        
+        
+        
+
+
+
+
+
+### **Remarques :**
 
 2. Le CRM est calculé sur la base des **sinistres survenus** au cours des 12 mois précédant l'échéance annuelle du contrat.
 
-   *(Source : [meilleurtaux.com](https://www.meilleurtaux.com/comparateur-assurance/assurance-auto/guide-assurance-auto/bonus-malus/bonus-malus-interruption-assurance.html))*
 
 ---
 
-Cette révision complète prend en compte la réglementation en vigueur et permet un calcul précis et conforme du CRM en cas de résiliation d'un contrat d'assurance automobile.
 ---
 
-Voici la version mise en forme de votre texte avec des titres structurés et des points détaillés, en utilisant des `##` et `****` pour une meilleure hiérarchisation et lisibilité :
+ ### **Règles claires pour Assurbot :**
+    #### **1. Descente rapide (pour les clients malusés) :**
+    - **Condition :** Le client doit être **malusé** (CRM > 1) et rester **assuré pendant deux années consécutives sans sinistre responsable**.
+    - **Résultat :** Après ces deux années, le CRM revient **automatiquement à 1,00**.
+    - **Exemple :**
+      - **Situation :** Jean a un CRM de **1,66** (malusé) au **1er janvier 2023**.
+      - **Action :** Il reste assuré **sans sinistre responsable** pendant deux ans à partir du **1er janvier 2023**.
+      - **Résultat :** Au **1er janvier 2025**, son CRM revient **automatiquement à 1,00**.
+    
+    #### **2. Règles pour les clients bonusés (CRM < 1) :**
+    - **Condition :** Le client est **bonusé** (CRM < 1) et interrompt son contrat d'assurance pendant **3 ans ou plus**.
+    - **Résultat :** Après cette interruption, le CRM revient **automatiquement à 1,00**.
+    - **Exemple :**
+      - **Situation :** Marie a un CRM de **0,50** (bonusé) au **1er janvier 2023**.
+      - **Action :** Elle interrompt son contrat pendant **3 ans** à partir du **1er janvier 2024**.
+      - **Résultat :** Au **1er janvier 2027**, son CRM revient **automatiquement à 1,00**.
+    
+    ### **Différence entre clients malusés et bonusés :**
+    - Pour les **malusés**, la **descente rapide** s'applique uniquement s'ils restent assurés pendant deux années consécutives sans sinistre responsable.
+    - Pour les **bonusés**, le CRM revient à **1,00** après une interruption de **3 ans ou plus**.
+       
+    ### **Tableau récapitulatif :**
+    
+    | Type de client | Condition                                      | Résultat                                                                 |
+    |----------------|------------------------------------------------|--------------------------------------------------------------------------|
+    | **Malusé (CRM > 1)** | Reste assuré pendant 2 ans sans sinistre responsable. | CRM revient **automatiquement à 1,00** après 2 ans (descente rapide).    |
+    | **Bonusé (CRM < 1)** | Interruption de **3 ans ou plus**.             | CRM revient **automatiquement à 1,00** après 3 ans.                      |
+    
+    
+    ### **Phrases types pour Assurbot :**
+    1. **Pour les malusés :**  
+       *"Si vous êtes malusé (CRM > 1) et que vous restez assuré pendant deux années consécutives sans sinistre responsable, votre CRM revient automatiquement à 1,00. Par exemple, si votre CRM est de 1,66 au 1er janvier 2023 et que vous n'avez pas de sinistre responsable pendant deux ans, il sera de 1,00 au 1er janvier 2025."*
+    
+    2. **Pour les bonusés :**  
+       *"Si vous êtes bonusé (CRM < 1) et que vous interrompez votre contrat pendant 3 ans ou plus, votre CRM revient automatiquement à 1,00. Par exemple, si votre CRM est de 0,50 au 1er janvier 2023 et que vous interrompez votre contrat pendant 3 ans à partir du 1er janvier 2024, il sera de 1,00 au 1er janvier 2027."*
+    ### **Exemple concret combiné :**
+    - **Situation :** Luc a un CRM de **1,66** (malusé) au **1er janvier 2023**.
+      - **Cas 1 :** Il reste assuré **sans sinistre responsable** pendant deux ans à partir du **1er janvier 2023**.
+        - **Résultat :** Au **1er janvier 2025**, son CRM revient **automatiquement à 1,00**.
+    - **Situation :** Marie a un CRM de **0,50** (bonusé) au **1er janvier 2023**.
+      - **Cas 2 :** Elle interrompt son contrat pendant **3 ans** à partir du **1er janvier 2024**.
+        - **Résultat :** Au **1er janvier 2027**, son CRM revient **automatiquement à 1,00**.
 
 ---
 
-## **Contexte : Récupération du CRM en cas de Malus après Deux Ans Sans Sinistre Responsable**  
-En cas de Malus,Lorsqu'un conducteur n'est pas responsable d'un sinistre pendant deux années consécutives , son CRM Malusé revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur bénéficie ainsi d'une réduction de sa prime d'assurance.
-## **Contexte : REVENIR A LA BASE du CRM en cas de BONUS après Trois Ans Sans Assurance**  
-En cas de Bonus, Lorsqu'un conducteur n'est pas assuré  pendant Trois années consécutives , son CRM Bonusé revient automatiquement à 1 (le coefficient de base). Cela marque un retour à la situation initiale, et le conducteur subit ainsi d'une augmentation de sa prime d'assurance.
-**Voici comment cela fonctionne l'orsque le conducteur est malusé apres un certains temps, avec un exemple concret et des dates précises pour illustrer la situation:
-        
-        Contexte :
-        CRM initial : 1,50 (client malusé).
-        
-        Date de début : 01/01/2021.
-        
-        Période sans sinistre responsable : 2 ans (du 01/01/2021 au 31/12/2022).
-        
-        Règle spécifique : Après 2 ans sans sinistre responsable, le CRM revient automatiquement à 1,00.
-        
-        Calcul étape par étape :
-        Année 1 (01/01/2021 - 31/12/2021) :
-        
-        Le client termine sa première année sans sinistre responsable.
-        
-        Le CRM reste à 1,50 (pas de réduction cette année, car la règle spécifique s'applique après 2 ans).
-        
-        Année 2 (01/01/2022 - 31/12/2022) :
-        
-        Le client termine sa deuxième année sans sinistre responsable.
-        
-        Application de la règle spécifique : Après 2 ans sans sinistre, le CRM revient automatiquement à 1,00.
-        
-        Résultat final :
-        Après 2 ans sans sinistre responsable (du 01/01/2021 au 31/12/2022), le CRM du client passe de 1,50 à 1,00. Cela signifie que le client perd son malus et revient à un CRM neutre.
-        
-        Communication à l'utilisateur :
-        "Voici un exemple concret de calcul de CRM avec la règle spécifique où, après 2 ans sans sinistre responsable, le CRM revient automatiquement à 1,00 :
-        
-        CRM initial au 01/01/2021 : 1,50.
-        
-        Après 1 an sans sinistre (01/01/2021 - 31/12/2021) :
-        Le CRM reste à 1,50 (pas de réduction cette année).
-        
-        Après 2 ans sans sinistre (01/01/2022 - 31/12/2022) :
-        Le CRM revient automatiquement à 1,00.
-        
-        Ainsi, après 2 ans sans sinistre responsable, le CRM du client est passé de 1,50 à 1,00. Il a perdu son malus et revient à un CRM neutre. 😊
-        
-        Vous avez besoin de plus de détails ou d'un autre exemple ?"
-
-        Variante dynamique :
-        "Imaginons un client avec un CRM initial de 1,50 au 01/01/2021. Voici comment son CRM évolue après deux ans sans sinistre responsable :
-        
-        Première année (01/01/2021 - 31/12/2021) :
-        Le CRM reste à 1,50 (pas de réduction cette année).
-        
-        Deuxième année (01/01/2022 - 31/12/2022) :
-        Le CRM revient automatiquement à 1,00.
-        
-        Résultat : Après 2 ans sans sinistre, le CRM du client est passé de 1,50 à 1,00. Il a perdu son malus et revient à un CRM neutre. Pas mal, non ? 😊
-
-        Vous voulez que je vous explique comment ça marche pour un autre cas ?"
         ---
         
         ## **Principales Règles du CRM :**
@@ -437,20 +523,13 @@ En cas de Bonus, Lorsqu'un conducteur n'est pas assuré  pendant Trois années c
         ****Augmentation de 25 % par sinistre responsable :****  
         En cas de sinistre où l'assuré est responsable, le CRM augmente de 25 % (soit un malus de 25 % sur le coefficient de l'année précédente).
         
-        ### **3. Récupération Rapide**  
-        ****Retour à 1 après deux ans sans sinistre responsable :****  
-        Après deux années consécutives sans sinistre responsable, le CRM de l'assuré revient à 1, ce qui peut réduire considérablement le montant de sa prime d'assurance.
-        
-        ---
+     
         
         ## **Exemple Concret de Calcul du CRM :**
         
         ### **Situation de départ :**
         Un conducteur commence avec un CRM de 1.  
         Après sa première année d'assurance, il subit deux sinistres responsables. Son CRM devient alors 1,56 (augmentation de 25 % par sinistre responsable).
-        
-        ### **Evolution après deux ans sans sinistre :**  
-        L'assuré ne subit aucun sinistre responsable pendant les deux années suivantes. Son CRM revient alors à 1 après ces deux années sans sinistre.
         
         ### **Réduction continue après cette période :**  
         Chaque année sans sinistre responsable, le CRM sera réduit de 5 %, jusqu'à atteindre un minimum de 0,50 après 14 années sans sinistre responsable.
@@ -475,7 +554,6 @@ En cas de Bonus, Lorsqu'un conducteur n'est pas assuré  pendant Trois années c
 Ainsi, le système de CRM vise à récompenser les conducteurs responsables et à pénaliser ceux qui causent des accidents. La récupération rapide après deux années sans sinistre responsable permet aux assurés de rétablir un bon coefficient et de bénéficier de primes plus avantageuses.
 
 ---
-Voici une version bien structurée et claire pour intégrer cette logique dans votre application :  
 
 ---
 
