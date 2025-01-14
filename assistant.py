@@ -474,7 +474,8 @@ Le coefficient de réduction-majoration (CRM) est utilisé pour ajuster le coût
       - **Situation :** Jean a un CRM de **1,66** (malusé) au **1er janvier 2023**.
       - **Action :** Il reste assuré **sans sinistre responsable** pendant deux ans à partir du **1er janvier 2023**.
       - **Résultat :** Au **1er janvier 2025**, son CRM revient **automatiquement à 1,00**.
-    
+      - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     #### **2. Règles pour les clients bonusés (CRM < 1) :**
     - **Condition :** Le client est **bonusé** (CRM < 1) et interrompt son contrat d'assurance pendant **3 ans ou plus**.
     - **Résultat :** Après cette interruption, le CRM revient **automatiquement à 1,00**.
@@ -482,7 +483,8 @@ Le coefficient de réduction-majoration (CRM) est utilisé pour ajuster le coût
       - **Situation :** Marie a un CRM de **0,50** (bonusé) au **1er janvier 2023**.
       - **Action :** Elle interrompt son contrat pendant **3 ans** à partir du **1er janvier 2024**.
       - **Résultat :** Au **1er janvier 2027**, son CRM revient **automatiquement à 1,00**.
-    
+      - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     ### **Différence entre clients malusés et bonusés :**
     - Pour les **malusés**, la **descente rapide** s'applique uniquement s'ils restent assurés pendant deux années consécutives sans sinistre responsable.
     - Pour les **bonusés**, le CRM revient à **1,00** après une interruption de **3 ans ou plus**.
@@ -493,21 +495,29 @@ Le coefficient de réduction-majoration (CRM) est utilisé pour ajuster le coût
     |----------------|------------------------------------------------|--------------------------------------------------------------------------|
     | **Malusé (CRM > 1)** | Reste assuré pendant 2 ans sans sinistre responsable. | CRM revient **automatiquement à 1,00** après 2 ans (descente rapide).    |
     | **Bonusé (CRM < 1)** | Interruption de **3 ans ou plus**.             | CRM revient **automatiquement à 1,00** après 3 ans.                      |
-    
+      - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     
     ### **Phrases types pour Assurbot :**
     1. **Pour les malusés :**  
        *"Si vous êtes malusé (CRM > 1) et que vous restez assuré pendant deux années consécutives sans sinistre responsable, votre CRM revient automatiquement à 1,00. Par exemple, si votre CRM est de 1,66 au 1er janvier 2023 et que vous n'avez pas de sinistre responsable pendant deux ans, il sera de 1,00 au 1er janvier 2025."*
-    
+      - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     2. **Pour les bonusés :**  
        *"Si vous êtes bonusé (CRM < 1) et que vous interrompez votre contrat pendant 3 ans ou plus, votre CRM revient automatiquement à 1,00. Par exemple, si votre CRM est de 0,50 au 1er janvier 2023 et que vous interrompez votre contrat pendant 3 ans à partir du 1er janvier 2024, il sera de 1,00 au 1er janvier 2027."*
+         - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     ### **Exemple concret combiné :**
     - **Situation :** Luc a un CRM de **1,66** (malusé) au **1er janvier 2023**.
       - **Cas 1 :** Il reste assuré **sans sinistre responsable** pendant deux ans à partir du **1er janvier 2023**.
         - **Résultat :** Au **1er janvier 2025**, son CRM revient **automatiquement à 1,00**.
+          - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+         - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
     - **Situation :** Marie a un CRM de **0,50** (bonusé) au **1er janvier 2023**.
       - **Cas 2 :** Elle interrompt son contrat pendant **3 ans** à partir du **1er janvier 2024**.
         - **Résultat :** Au **1er janvier 2027**, son CRM revient **automatiquement à 1,00**.
+        - ** En cas de resiliation: en cas de resiliation le calcule du CRM doit s'actualisé a la date de resiliation selon les règles de l'assurance.
+      - ** En cas de plus de deux Rélevé d'information: Lors des calcules, la dernieère date d'actualisation  ou de resiliation si disponible du **RI prececendant doivent etre repris pour continuer et ajuster les calcules de ces dates  sur la date debut de souscription sur le second **RI ou les autres **RI Recentes, cest la reprise des dates pour avoir une coherence des calcules afin de mieux actualiser les CRM et appliqué la descente rapide si necessaire.
 
 ---
 
