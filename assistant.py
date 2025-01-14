@@ -597,16 +597,16 @@ Ainsi, le système de CRM vise à récompenser les conducteurs responsables et �
 
 **Règle systématique :  CRM calculé**  
 
-Si le relevé d'information est a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé continue l'actualisation jusqua la date d'edition ou d'etablissement du relevé d'information si disponible. La communication doit inclure :  
-1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation si disponible est [valeur], et le CRM du client a la date d'edition du RI est [valeur] si disponible avec les dates exactes."**  
+Si le relevé d'information est a jour Et si mentionné (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez  la date de résiliation si disponible au CRM calculé ou continue l'actualisation jusqua la date d'echeance du dernier RI  si disponible. La communication doit inclure :  
+1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation  est [valeur], et le CRM du client a la date d'echeance du RI est [valeur] si disponible tout en associant ces dates exactes."**  
 2. Les détails pertinents : durée d'assurance, sinistres, résiliation, etc.  
 3. Une mention claire de l'utilisation du CRM pour une nouvelle souscription ou une mise à jour du contrat.  
-4.Lorsque le CRM est calculé et qu'aucune résiliation n'est mentionnée sur le Relevé d'information, il convient de préciser au courtier que le CRM actualisé à la date d'édition ne prend pas en compte la résiliation du contrat, pour une comprehension claire au courtier.
+4.Lorsque le CRM est calculé et qu'aucune résiliation n'est mentionnée sur le Relevé d'information, il convient de préciser au courtier que le CRM actualisé à la date d'echeance ne prend pas en compte la résiliation du contrat, pour une comprehension claire au courtier.
 
 5. Avant de calculer le CRM, il est impératif de vérifier la cohérence entre le CRM calculé et la date d'obtention du permis de conduire. Un CRM de 0,85 pour un conducteur ayant seulement 2 ans de permis, par exemple, serait incohérent et nécessiterait une vérification.
-Si le relevé d'information n'est pas a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez toujours la date de résiliation si disponible au CRM calculé continue l'actualisation jusqua la date d'edition du relevé d'information si disponible. La communication doit inclure :  
-6. La phrase :  **"Suite au calcul effectué le Relvevé d'information du client n'est pas a jour, le calcule du CRM pourrait etre erroné, le CRM à la date de résiliation  est [valeur] a condition que la date de risialion soit mentionné, et le CRM du client a la date d'edition du RI est [valeur] a condition que la date de risialion soit mentionné avec les dates exactes."**  
-1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation si disponible est [valeur], et le CRM du client a la date d'edition du RI est [valeur]."**  
+Si le relevé d'information n'est pas a jour, Quel que soit le scénario (résiliation, continuation du contrat, présence ou absence de sinistre, etc.), associez  la date de résiliation si disponible au CRM calculé ou continue l'actualisation jusqua la date d'echeance du dernier relevé d'information si disponible. La communication doit inclure :  
+6. La phrase :  **"Suite au calcul effectué le Relvevé d'information du client n'est pas a jour, le calcule du CRM pourrait etre erroné, le CRM à la date de résiliation  est [valeur] a condition que la date de risialion soit mentionné, et le CRM du client a la date d'echeance du dernier RI I est [valeur] a condition que la date de risialion ou d'echeance soit mentionné avec les dates exactes."**  
+1. La phrase : **"Suite au calcul effectué, le CRM à la date de résiliation  est [valeur], et le CRM du client a la date d'echeance du RI est [valeur]."**  
 
 ---
 
