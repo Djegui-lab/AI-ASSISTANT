@@ -1040,36 +1040,63 @@ Calculer le coefficient de réduction-majoration (CRM) en assurance automobile e
 
 ---
 
-#### **4. Sortie attendue** 📤
-- **CRM final** : Valeur du CRM à la date d'échéance du contrat.  
-- **Détail des étapes** :  
-  - CRM initial  
-  - CRM à la fin de chaque année d'assurance  
-  - Application de la descente rapide (si applicable)  
+#### **4. Sortie attendue** 📊
+---
+
+
+| **Période**                     | **Événements**                                                                                                     | **CRM** |
+| :------------------------------ | :----------------------------------------------------------------------------------------------------------------- | :-----: |
+| **20/06/2017 - 19/06/2018**     | Sinistre responsable (17/10/2017) ➡️ Majoration de 25 %                                                            |  1,25   |
+| **20/06/2018 - 19/06/2019**     | Sinistre non responsable (14/02/2018) ➡️ Pas d'impact <br> Sinistre responsable (22/03/2019) ➡️ Majoration de 25 % |  1,56   |
+| **20/06/2019 - 19/06/2020**     | Aucun sinistre responsable ➡️ Bonus annuel de 5 %                                                                  |  1,48   |
+| **20/06/2020 - 19/06/2021**     | Sinistre responsable (10/08/2020) ➡️ Majoration de 25 %                                                            |  1,85   |
+| **20/06/2021 - 19/06/2022**     | Sinistre non responsable (05/01/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 %       |  1,76   |
+| **20/06/2022 - 19/06/2023**     | Sinistre non responsable (04/10/2022) ➡️ Pas d'impact <br> **Descente rapide** ➡️ CRM ramené à 1,00                |  1,00   |
+| **10/10/2023**                  | Date de résiliation du contrat à 1,00                                                                             |  1,00   |
 
 ---
 
-### **Exemple de sortie attendue** 📋
+### **Explication des étapes** 📝
 
-#### **CRM final** : **1,00** ✅
+1. **20/06/2017 - 19/06/2018** :  
+   - Sinistre responsable (17/10/2017) ➡️ Majoration de 25 % :  
+     - CRM = 1,00 + 0,25 = **1,25**
 
-#### **Détail des étapes** 📊
+2. **20/06/2018 - 19/06/2019** :  
+   - Sinistre non responsable (14/02/2018) ➡️ Pas d'impact.  
+   - Sinistre responsable (22/03/2019) ➡️ Majoration de 25 % :  
+     - CRM = 1,25 + 0,31 (25 % de 1,25) = **1,56**
 
-| **Période**               | **Événements**                                                                 | **CRM** |
-|---------------------------|-------------------------------------------------------------------------------|---------|
-| **20/06/2017 - 19/06/2018** | Sinistre responsable (17/10/2017) ➡️ Majoration de 25 %                        | 1,25    |
-| **20/06/2018 - 19/06/2019** | Sinistre non responsable (14/02/2018) ➡️ Pas d'impact <br> Sinistre responsable (22/03/2019) ➡️ Majoration de 25 % | 1,50    |
-| **20/06/2019 - 19/06/2020** | Aucun sinistre responsable ➡️ Bonus annuel de 5 %                              | 1,43    |
-| **20/06/2020 - 19/06/2021** | Sinistre responsable (10/08/2020) ➡️ Majoration de 25 %                        | 1,68    |
-| **20/06/2021 - 19/06/2022** | Sinistre non responsable (05/01/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 % | 1,60    |
-| **20/06/2022 - 19/06/2023** | **Descente rapide** ➡️ CRM ramené à 1,00 (deux années consécutives sans sinistre responsable) | 1,00    |
+3. **20/06/2019 - 19/06/2020** :  
+   - Aucun sinistre responsable ➡️ Bonus annuel de 5 % :  
+     - CRM = 1,56 × 0,95 = **1,48**
+
+4. **20/06/2020 - 19/06/2021** :  
+   - Sinistre responsable (10/08/2020) ➡️ Majoration de 25 % :  
+     - CRM = 1,48 + 0,37 (25 % de 1,48) = **1,85**
+
+5. **20/06/2021 - 19/06/2022** :  
+   - Sinistre non responsable (05/01/2022) ➡️ Pas d'impact.  
+   - Aucun sinistre responsable ➡️ Bonus annuel de 5 % :  
+     - CRM = 1,85 × 0,95 = **1,76**
+
+6. **20/06/2022 - 19/06/2023** :  
+   - Sinistre non responsable (04/10/2022) ➡️ Pas d'impact.  
+   - **Descente rapide** ➡️ CRM ramené à **1,00** (deux années consécutives sans sinistre responsable).
+
+7. **10/10/2023** :  
+   - Date de résiliation du contrat ➡️ CRM maintenu à **1,00**.
 
 ---
 
 ### **Remarque** 💡
-- Ce prompt garantit que le CRM est **actualisé à chaque période**, en respectant les règles d'assurance automobile françaises.  
-- La descente rapide est appliquée automatiquement à la date du **20/06/2022 - 19/06/2023** grâce à deux années consécutives sans sinistre responsable.  
+- Le tableau est maintenant **bien structuré** et respecte l'ordre chronologique des événements.  
+- La descente rapide est appliquée à la période **20/06/2022 - 19/06/2023** après deux années consécutives sans sinistre responsable.  
+- La résiliation du contrat le **10/10/2023** maintient le CRM à **1,00**.
 
+---
+
+N'hésitez pas à utiliser ce tableau pour vos calculs ou à l'adapter selon vos besoins ! 😊
 ---
 
 
