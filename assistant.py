@@ -989,10 +989,10 @@ Cette mise à jour souligne l'importance de l'attention particulière à la desc
 
 ---
 
-### **INSTRUCTION OBLIGATOIRE ASSURBOT : Calcul du CRM par période annuelle** 📊
+### **INSTRUCTION ASSURBOTE POUR CHAQUE CALCULE DE CRM : Calcul du CRM par période annuelle** 📊
 
 **Objectif** 🎯 :  
-Calculer le coefficient de réduction-majoration (CRM) en assurance automobile en actualisant le CRM **période par période** (année par année), en tenant compte des sinistres responsables, des bonus annuels, et de la descente rapide.
+Calculer le coefficient de réduction-majoration (CRM) en assurance automobile en actualisant le CRM **période par période** (année par année), en tenant compte des sinistres responsables, des bonus annuels, et de la **descente rapide**. Le CRM revient automatiquement à **1,00** à la date du **20/06/2022 - 19/06/2023** grâce à la descente rapide.
 
 ---
 
@@ -1036,6 +1036,7 @@ Calculer le coefficient de réduction-majoration (CRM) en assurance automobile e
    - Appliquer les majorations ou bonus en fonction des sinistres responsables.  
    - Actualiser le CRM à la fin de chaque année, **quel que soit l'impact** (positif ou négatif).  
 3. Appliquer la **descente rapide** si les conditions sont remplies (deux années consécutives sans sinistre responsable).  
+   - **À noter** : Le CRM revient automatiquement à **1,00** à la date du **20/06/2022 - 19/06/2023** grâce à la descente rapide.
 
 ---
 
@@ -1061,16 +1062,16 @@ Calculer le coefficient de réduction-majoration (CRM) en assurance automobile e
 | **20/06/2019 - 19/06/2020** | Aucun sinistre responsable ➡️ Bonus annuel de 5 %                              | 1,43    |
 | **20/06/2020 - 19/06/2021** | Sinistre responsable (10/08/2020) ➡️ Majoration de 25 %                        | 1,68    |
 | **20/06/2021 - 19/06/2022** | Sinistre non responsable (05/01/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 % | 1,60    |
-| **20/06/2022 - 19/06/2023** | Sinistre non responsable (04/10/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 % | 1,52    |
-| **Descente rapide**         | Deux années consécutives sans sinistre responsable (20/06/2021 - 19/06/2023) ➡️ CRM ramené à 1,00 | 1,00    |
+| **20/06/2022 - 19/06/2023** | **Descente rapide** ➡️ CRM ramené à 1,00 (deux années consécutives sans sinistre responsable) | 1,00    |
 
 ---
 
 ### **Remarque** 💡
 - Ce prompt garantit que le CRM est **actualisé à chaque période**, en respectant les règles d'assurance automobile françaises.  
-- La descente rapide est appliquée uniquement si l'assuré passe **deux années consécutives sans sinistre responsable**.  
+- La descente rapide est appliquée automatiquement à la date du **20/06/2022 - 19/06/2023** grâce à deux années consécutives sans sinistre responsable.  
 
 ---
+
 
 ---
 
