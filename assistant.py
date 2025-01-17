@@ -989,73 +989,88 @@ Cette mise à jour souligne l'importance de l'attention particulière à la desc
 
 ---
 
-### **INSTRUCTION SYSTEME ASSURBOT  ### **: Calcul du CRM en assurance automobile**
+### **INSTRUCTION OBLIGATOIRE ASSURBOT : Calcul du CRM par période annuelle** 📊
 
-**Objectif** :  
-Calculer le coefficient de réduction-majoration (CRM) en suivant les règles d'assurance automobile françaises, en tenant compte de l'ordre de survenance des sinistres, de l'actualisation annuelle du CRM, et de la descente rapide.
-
----
-
-**Instructions** :  
-1. **Données d'entrée** :  
-   - **CRM initial** : 1,00  
-   - **Liste des sinistres** : Fournir une liste des sinistres avec les informations suivantes :  
-     - Date du sinistre  
-     - Type de sinistre (accident matériel, accident corporel, bris de glace, etc.)  
-     - Responsabilité (responsable, non responsable)  
-   - **Date de début du contrat** : Date de souscription du contrat d'assurance.  
-   - **Date d'échéance du contrat** : Date de fin du contrat pour laquelle le CRM doit être calculé.  
-
-2. **Règles de calcul** :  
-   - **Majoration** :  
-     - Chaque sinistre **responsable** entraîne une majoration de 25 % du CRM.  
-   - **Réduction (bonus annuel)** :  
-     - Chaque année sans sinistre responsable entraîne une réduction de 5 % du CRM.  
-   - **Descente rapide** :  
-     - Si l'assuré passe **deux années consécutives sans sinistre responsable**, le CRM est ramené à 1,00.  
-   - **Sinistres non responsables** :  
-     - Les sinistres non responsables n'ont **aucun impact** sur le CRM.  
-
-3. **Ordre de traitement** :  
-   - Traiter les sinistres dans l'ordre chronologique de survenance.  
-   - Actualiser le CRM chaque année en fonction des sinistres responsables et des bonus annuels.  
-   - Appliquer la descente rapide si les conditions sont remplies.  
-
-4. **Sortie attendue** :  
-   - **CRM final** : Valeur du CRM à la date d'échéance du contrat.  
-   - **Détail des étapes** :  
-     - CRM initial  
-     - CRM après chaque sinistre responsable  
-     - CRM après chaque bonus annuel  
-     - Application de la descente rapide (si applicable)  
+**Objectif** 🎯 :  
+Calculer le coefficient de réduction-majoration (CRM) en assurance automobile en actualisant le CRM **période par période** (année par année), en tenant compte des sinistres responsables, des bonus annuels, et de la descente rapide.
 
 ---
 
-**Exemple de données d'entrée** :  
-- **CRM initial** : 1,00  
-- **Date de début du contrat** : 20/06/2017  
-- **Date d'échéance du contrat** : 20/06/2023  
-- **Liste des sinistres** :  
-  1. **17/10/2017** : Accident de la circulation (Matériel) - **Responsabilité Totale**  
-  2. **14/02/2018** : Accident de la circulation (Matériel) - **Non responsable**  
-  3. **22/03/2019** : Accident de la circulation (Matériel) - **Responsabilité Totale**  
-  4. **10/08/2020** : Accident de la circulation (Corporel) - **Responsabilité Totale**  
-  5. **05/01/2022** : Accident de la circulation (Matériel) - **Non responsable**  
-  6. **04/10/2022** : Bris de glace (Matériel) - **Non responsable**  
+### **Instructions** 📝
+
+#### **1. Données d'entrée** 📥
+| **Élément**               | **Valeur**                     |
+|---------------------------|--------------------------------|
+| **CRM initial**            | 1,00                          |
+| **Date de début du contrat** | 20/06/2017                   |
+| **Date d'échéance du contrat** | 20/06/2023                 |
+
+**Liste des sinistres** 🚨 :  
+| **Date**       | **Type de sinistre**            | **Responsabilité**       |
+|----------------|---------------------------------|--------------------------|
+| 17/10/2017     | Accident de la circulation (Matériel) | Responsable             |
+| 14/02/2018     | Accident de la circulation (Matériel) | Non responsable         |
+| 22/03/2019     | Accident de la circulation (Matériel) | Responsable             |
+| 10/08/2020     | Accident de la circulation (Corporel) | Responsable             |
+| 05/01/2022     | Accident de la circulation (Matériel) | Non responsable         |
+| 04/10/2022     | Bris de glace (Matériel)        | Non responsable         |
 
 ---
 
-**Exemple de sortie attendue** :  
-- **CRM final** : 1,00  
+#### **2. Règles de calcul** 📏
+- **Majoration** ⬆️ :  
+  - Chaque sinistre **responsable** entraîne une majoration de **25 %** du CRM.
+- **Réduction (bonus annuel)** ⬇️ :  
+  - Chaque année sans sinistre responsable entraîne une réduction de **5 %** du CRM.
+- **Descente rapide** 🚀 :  
+  - Si l'assuré passe **deux années consécutives sans sinistre responsable**, le CRM est ramené à **1,00**.
+- **Sinistres non responsables** 🚫 :  
+  - Les sinistres non responsables n'ont **aucun impact** sur le CRM.
+
+---
+
+#### **3. Ordre de traitement** 🔄
+1. Diviser la période du contrat en **années d'assurance** (du 20/06 au 19/06 de l'année suivante).  
+2. Pour chaque année d'assurance :  
+   - Identifier les sinistres survenus pendant cette période.  
+   - Appliquer les majorations ou bonus en fonction des sinistres responsables.  
+   - Actualiser le CRM à la fin de chaque année, **quel que soit l'impact** (positif ou négatif).  
+3. Appliquer la **descente rapide** si les conditions sont remplies (deux années consécutives sans sinistre responsable).  
+
+---
+
+#### **4. Sortie attendue** 📤
+- **CRM final** : Valeur du CRM à la date d'échéance du contrat.  
 - **Détail des étapes** :  
-  1. **CRM initial** : 1,00  
-  2. **17/10/2017** : Sinistre responsable → CRM = 1,25  
-  3. **22/03/2019** : Sinistre responsable → CRM = 1,50  
-  4. **Année 3 (20/06/2019 - 19/06/2020)** : Bonus annuel → CRM = 1,43  
-  5. **10/08/2020** : Sinistre responsable → CRM = 1,68  
-  6. **Année 5 (20/06/2021 - 19/06/2022)** : Bonus annuel → CRM = 1,60  
-  7. **Année 6 (20/06/2022 - 19/06/2023)** : Bonus annuel → CRM = 1,52  
-  8. **Descente rapide** : CRM ramené à 1,00 après deux années sans sinistre responsable.  
+  - CRM initial  
+  - CRM à la fin de chaque année d'assurance  
+  - Application de la descente rapide (si applicable)  
+
+---
+
+### **Exemple de sortie attendue** 📋
+
+#### **CRM final** : **1,00** ✅
+
+#### **Détail des étapes** 📊
+
+| **Période**               | **Événements**                                                                 | **CRM** |
+|---------------------------|-------------------------------------------------------------------------------|---------|
+| **20/06/2017 - 19/06/2018** | Sinistre responsable (17/10/2017) ➡️ Majoration de 25 %                        | 1,25    |
+| **20/06/2018 - 19/06/2019** | Sinistre non responsable (14/02/2018) ➡️ Pas d'impact <br> Sinistre responsable (22/03/2019) ➡️ Majoration de 25 % | 1,50    |
+| **20/06/2019 - 19/06/2020** | Aucun sinistre responsable ➡️ Bonus annuel de 5 %                              | 1,43    |
+| **20/06/2020 - 19/06/2021** | Sinistre responsable (10/08/2020) ➡️ Majoration de 25 %                        | 1,68    |
+| **20/06/2021 - 19/06/2022** | Sinistre non responsable (05/01/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 % | 1,60    |
+| **20/06/2022 - 19/06/2023** | Sinistre non responsable (04/10/2022) ➡️ Pas d'impact <br> Aucun sinistre responsable ➡️ Bonus annuel de 5 % | 1,52    |
+| **Descente rapide**         | Deux années consécutives sans sinistre responsable (20/06/2021 - 19/06/2023) ➡️ CRM ramené à 1,00 | 1,00    |
+
+---
+
+### **Remarque** 💡
+- Ce prompt garantit que le CRM est **actualisé à chaque période**, en respectant les règles d'assurance automobile françaises.  
+- La descente rapide est appliquée uniquement si l'assuré passe **deux années consécutives sans sinistre responsable**.  
+
+---
 
 ---
 
