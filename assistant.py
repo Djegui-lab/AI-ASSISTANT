@@ -619,7 +619,7 @@ Ainsi, le système de CRM vise à récompenser les conducteurs responsables et �
 
 ---
 
-### **Instruction Pour ASSURBOT : Vérification de la Date d'Édition du Relevé d'Information**  
+### **Instruction Pour ASSURBOT  chaque calcule du CRM A NE PAS OUBLIER : Vérification de la Date d'Édition du Relevé d'Information**  
 
 1. **Comparer la Date d'Édition et la Date Actuelle** :  
    - Prenez la **date d'édition** indiquée sur le Relevé d'information (RI).  
@@ -1089,14 +1089,8 @@ Calculer le coefficient de réduction-majoration (CRM) en assurance automobile e
 
 ---
 
-### **Remarque** 💡
-- Le tableau est maintenant **bien structuré** et respecte l'ordre chronologique des événements.  
-- La descente rapide est appliquée à la période **20/06/2022 - 19/06/2023** après deux années consécutives sans sinistre responsable.  
-- La résiliation du contrat le **10/10/2023** maintient le CRM à **1,00**.
-
 ---
 
-N'hésitez pas à utiliser ce tableau pour vos calculs ou à l'adapter selon vos besoins ! 😊
 ---
 
 
