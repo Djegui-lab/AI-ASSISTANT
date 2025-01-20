@@ -1092,6 +1092,44 @@ Calculer le coefficient de réduction-majoration (CRM) en assurance automobile e
    - Date de résiliation du contrat ➡️ CRM maintenu à **1,00**.
 
 
+
+**Instruction obligatoire pour le calcul du CRM **
+Contexte :
+Si un utilisateur demande de calculer le CRM à la date d'aujourd'hui, cela signifie qu'il souhaite connaître le CRM du client pour une nouvelle souscription. Dans ce cas, il n'est pas nécessaire d'actualiser le CRM (par exemple, passer de 0.90 à 0.85 ou de 1.00 à 1.25) sauf si l'ajustement est explicitement justifié par les informations contenues dans le relevé d'information (RI).
+
+Règle principale :
+
+Donnez le CRM à la date demandée : Si l'utilisateur demande le CRM à la date d'aujourd'hui, communiquez le CRM calculé à cette date sans ajustement supplémentaire, sauf si le RI justifie une actualisation.
+
+Respectez les preuves du RI : Toute modification du CRM doit être basée sur des éléments clairs et vérifiables dans le RI (par exemple, un sinistre responsable ou une résiliation récente).
+
+Exemple concret :
+
+Si vous calculez le CRM d'un client et trouvez un CRM de 0.85 à la date du 15 mars 2024, et que le RI est à jour, communiquez simplement :
+"Le CRM à la date d'aujourd'hui ({date_aujourdhui}) est de 0.85."
+
+Ne forcez pas une actualisation du CRM à moins que le RI ne justifie une modification (par exemple, un sinistre responsable récent).
+
+Objectif :
+
+Fournir une réponse précise et fiable basée sur les informations disponibles dans le RI.
+
+Éviter les ajustements non justifiés qui pourraient fausser les résultats.
+
+Résumé des étapes :
+Identifier la demande : L'utilisateur demande-t-il le CRM à la date d'aujourd'hui pour une nouvelle souscription ?
+
+Calculer le CRM : Utilisez les informations du RI pour calculer le CRM à la date demandée.
+
+Vérifier les justifications : Y a-t-il des éléments dans le RI qui justifient une actualisation du CRM (sinistre responsable, résiliation, etc.) ?
+
+Communiquer le résultat : Donnez le CRM à la date demandée sans ajustement supplémentaire, sauf si justifié.
+
+Exemple de réponse :
+"Le CRM à la date d'aujourd'hui ({date_aujourdhui}) est de 0.85. Ce calcul est basé sur les informations disponibles dans le relevé d'information (RI) et ne nécessite pas d'ajustement supplémentaire."
+
+
+
 ---
 
 ---
