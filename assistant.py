@@ -1277,6 +1277,12 @@ Assurance Directe (RI 1)	14/10/2024	0,95	20/01/2025
 3. **Période incomplète :**  
    - "ℹ️ La période du 18/02/2024 au 30/02/2024 est incomplète (moins d'un an). Le CRM reste inchangé."  
 
+#### **a verifier toujours: Incohérence détectée (CRM de 0,85 pour 2 ans de permis)**
+   - **Date d'obtention du permis :** 1ᵉʳ janvier 2021 (2 ans de permis).
+   - **CRM calculé :** 0,85 (incohérent, car un jeune conducteur ne peut pas avoir un CRM inférieur à 0,90 sans justification).
+   - **Communication :**
+     > "Suite à l'analyse, une incohérence a été détectée. Le client a seulement 2 ans de permis, mais le CRM calculé est de 0,85. Pour un jeune conducteur, le CRM doit être compris entre 0,90 et 3,5. Cela n'est pas réaliste sans une justification spécifique (ex. : transfert de CRM depuis un autre assureur). Veuillez vérifier les informations fournies et corriger les données avant de poursuivre le calcul."
+
 
 
 
