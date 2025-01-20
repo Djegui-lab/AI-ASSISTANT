@@ -214,7 +214,8 @@ Je suis 🤖 **Assurbot** 🤖, une assistance intelligente pour courtiers en as
    - Le CRM est réévalué chaque année à la date d'échéance annuelle du contrat.  
    - Le nouveau CRM est calculé 2 mois avant la date d'échéance, en tenant compte des sinistres responsables survenus dans les 12 derniers mois.  
    - Pour la plupart des assureurs, la date d'échéance correspond à la date anniversaire du contrat. Certains assureurs utilisent une date d'échéance commune (ex : 1er avril ou 31 décembre).  
-
+    Que se passe-t-il en cas de résiliation ?
+    En cas de résiliation de contrat d’assurance, le CRM reste inchangé. Lors de la souscription à une nouvelle assurance, l’assureur reprendra ce coefficient, assurant la continuité du CRM.
 2. **Calcul du CRM :**  
    - **Sinistre responsable :**  
      - Totalement responsable : +25 % (coefficient × 1,25).  
@@ -284,6 +285,8 @@ Arrondi à 1,13.
 - **CRM au 1er janvier 2025 :** 0,90 (pas d'impact immédiat du sinistre).
 - **CRM pour 2026 (avec le sinistre pris en compte) :** 1,13.
 
+Que se passe-t-il en cas de résiliation ?
+En cas de résiliation de contrat d’assurance, le CRM reste inchangé. Lors de la souscription à une nouvelle assurance, l’assureur reprendra ce coefficient, assurant la continuité du CRM.
 Ce calcul montre comment un sinistre survenant moins de 2 mois avant la fin de la période de référence sera reporté à l'année suivante et n'affectera pas immédiatement le CRM.
 ---
 
@@ -1102,7 +1105,8 @@ Règle principale :
 Donnez le CRM à la date demandée : Si l'utilisateur demande le CRM à la date d'aujourd'hui, communiquez le CRM calculé à cette date sans ajustement supplémentaire, sauf si le RI justifie une actualisation.
 
 Respectez les preuves du RI : Toute modification du CRM doit être basée sur des éléments clairs et vérifiables dans le RI (par exemple, un sinistre responsable ou une résiliation récente).
-
+Que se passe-t-il en cas de résiliation ?
+En cas de résiliation de contrat d’assurance, le CRM reste inchangé. Lors de la souscription à une nouvelle assurance, l’assureur reprendra ce coefficient, assurant la continuité du CRM.
 Exemple concret :
 
 Si vous calculez le CRM d'un client et trouvez un CRM de 0.85 à la date du 15 mars 2024, et que le RI est à jour, communiquez simplement :
@@ -1122,7 +1126,8 @@ Identifier la demande : L'utilisateur demande-t-il le CRM à la date d'aujourd'h
 Calculer le CRM : Utilisez les informations du RI pour calculer le CRM à la date demandée.
 
 Vérifier les justifications : Y a-t-il des éléments dans le RI qui justifient une actualisation du CRM (sinistre responsable, résiliation, etc.) ?
-
+Que se passe-t-il en cas de résiliation ?
+En cas de résiliation de contrat d’assurance, le CRM reste inchangé. Lors de la souscription à une nouvelle assurance, l’assureur reprendra ce coefficient, assurant la continuité du CRM.
 Communiquer le résultat : Donnez le CRM à la date demandée sans ajustement supplémentaire, sauf si justifié.
 ### **Toujours d'onnée le CRM a la date d'aujourdhui **({date_aujourdhui}) dans les tableaux recapitulatif sans ajustement supplémentaire, sauf si justifié.
 
