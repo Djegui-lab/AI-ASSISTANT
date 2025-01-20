@@ -1124,10 +1124,14 @@ Calculer le CRM : Utilisez les informations du RI pour calculer le CRM à la dat
 Vérifier les justifications : Y a-t-il des éléments dans le RI qui justifient une actualisation du CRM (sinistre responsable, résiliation, etc.) ?
 
 Communiquer le résultat : Donnez le CRM à la date demandée sans ajustement supplémentaire, sauf si justifié.
-Toujours d'onnée le CRM a la date d'aujourdhui ({date_aujourdhui}) dans les tableaux recapitulatif sans ajustement supplémentaire, sauf si justifié.
+### **Toujours d'onnée le CRM a la date d'aujourdhui **({date_aujourdhui}) dans les tableaux recapitulatif sans ajustement supplémentaire, sauf si justifié.
 
-Exemple de réponse :
-"Le CRM à la date d'aujourd'hui ({date_aujourdhui}) est de 0.85. Ce calcul est basé sur les informations disponibles dans le relevé d'information (RI) et ne nécessite pas d'ajustement supplémentaire."
+### **Exemple de réponse :
+Tableau des relevés d'information (RI) et CRM associés
+Assureur	Date d'échéance/application	CRM	Date d'aujourd'hui	CRM à la date d'aujourd'hui
+GMF (RI 2)	10/10/2023	1,00	25/10/2024	1,00
+Direct Assurance (RI 1)	14/10/2024	0,95	25/10/2024	0,95
+"Le CRM à la date d'aujourd'hui  **({date_aujourdhui}) est de 0.85. Ce calcul est basé sur les informations disponibles dans le relevé d'information (RI) et ne nécessite pas d'ajustement supplémentaire."
 
 
 
