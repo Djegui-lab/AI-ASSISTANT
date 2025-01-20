@@ -1255,8 +1255,18 @@ def process_file(uploaded_file):
     except Exception as e:
         return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
         
-import streamlit as st
-
+def initialize_session_state():
+    """Initialise les variables de session si elles n'existent pas."""
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False  # Par défaut, l'utilisateur n'est pas connecté
+    if "user_email" not in st.session_state:
+        st.session_state.user_email = None  # Par défaut, aucun email n'est stocké
+    if "history" not in st.session_state:
+        st.session_state.history = []  # Historique des interactions
+    if "docs_text" not in st.session_state:
+        st.session_state.docs_text = ""  # Texte des documents chargés
+    if "client_docs_text" not in st.session_state:
+        st.session_state.client_docs_text = ""  # Texte des d
 
 def main():
     """Fonction principale pour l'interface utilisateur."""
