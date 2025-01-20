@@ -1257,6 +1257,7 @@ def process_file(uploaded_file):
         
 import streamlit as st
 
+
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -1312,22 +1313,23 @@ def main():
     st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
     st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
 
+    # Onglets Connexion et Inscription
     tab1, tab2 = st.tabs(["Connexion", "Inscription"])
-        with tab1:
-            st.subheader("Connexion")
-            email = st.text_input("Email", key="login_email")
-            password = st.text_input("Mot de passe", type="password", key="login_password")
-            if st.button("Se connecter"):
-                login(email, password)
+    with tab1:
+        st.subheader("Connexion")
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Mot de passe", type="password", key="login_password")
+        if st.button("Se connecter"):
+            login(email, password)
 
-        with tab2:
-            st.subheader("Inscription")
-            name = st.text_input("Nom complet (inscription)", key="signup_name")
-            new_email = st.text_input("Email (inscription)", key="signup_email")
-            new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
-            confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password")
-            if st.button("S'inscrire"):
-                signup(name, new_email, new_password, confirm_password, authorized_emails)
+    with tab2:
+        st.subheader("Inscription")
+        name = st.text_input("Nom complet (inscription)", key="signup_name")
+        new_email = st.text_input("Email (inscription)", key="signup_email")
+        new_password = st.text_input("Mot de passe (inscription)", type="password", key="signup_password")
+        confirm_password = st.text_input("Confirmez le mot de passe (inscription)", type="password", key="confirm_password")
+        if st.button("S'inscrire"):
+            signup(name, new_email, new_password, confirm_password, authorized_emails)
 
     if st.session_state.logged_in:
         st.success(f"Bienvenue, {st.session_state.user_email}!")
