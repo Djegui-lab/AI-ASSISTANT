@@ -168,9 +168,24 @@ def calculate_crm_update(ri_date, crm_value):
         return f"⚠️ Le CRM de {crm_value} est daté du {ri_date.strftime('%d/%m/%Y')} et n'est donc pas à jour. Un RI plus récent (daté de moins de 3 mois) est nécessaire."
     else:
         return f"✅ Le CRM de {crm_value} est à jour (émis le {ri_date.strftime('%d/%m/%Y')})."
-from datetime import datetime, timedelta
 
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
+
+def extraire_date_edition_ri(client_docs_text):
+    """
+    Extrait la date d'édition du Relevé d'Information (RI) à partir des documents clients.
+    Retourne la date sous forme de chaîne de caractères (format "dd/mm/yyyy") ou None si non trouvée.
+    """
+    # Expression régulière pour rechercher une date au format "dd/mm/yyyy"
+    date_pattern = r"\b(\d{2}/\d{2}/\d{4})\b"
+    match = re.search(date_pattern, client_docs_text)
+    
+    if match:
+        return match.group(1)  # Retourne la date trouvée
+    else:
+        return None  # Aucune date trouvée
+
+# Interroger Gemini avec l'historique des interactions
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="ghemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Convertir l'historique en une chaîne de caractères
@@ -179,23 +194,7 @@ def query_gemini_with_history(docs_text, client_docs_text, user_question, histor
         # Obtenir la date d'aujourd'hui
         date_aujourdhui = datetime.now().strftime("%d/%m/%Y")
         
-        # Vérifier la validité du RI
-        def verifier_validite_ri(date_edition_ri):
-            """Vérifie si le RI est valide (moins de 90 jours)."""
-            try:
-                date_edition = datetime.strptime(date_edition_ri, "%d/%m/%Y")
-                aujourdhui = datetime.now()
-                delta = aujourdhui - date_edition
-                return delta.days <= 90
-            except ValueError:
-                return False  # Si la date est invalide, considérer le RI comme périmé
-        
-        # Exemple d'extraction de la date d'édition du RI (à adapter selon votre structure de données)
-        date_edition_ri = extraire_date_edition_ri(client_docs_text)  # Fonction à implémenter
-        
-        # Vérifier la validité du RI
-        ri_valide = verifier_validite_ri(date_edition_ri)
-
+        # Construire le prompt avec l'historique et la date d'aujourd'hui
         prompt = f"""
 **System message**
 
@@ -1263,14 +1262,7 @@ Assurance Directe (RI 1)	14/10/2024	0,95	20/01/2025
 3. **Période incomplète :**  
    - "ℹ️ La période du 18/02/2024 au 30/02/2024 est incomplète (moins d'un an). Le CRM reste inchangé."  
 
-
-
-**Vérification de la Validité du RI :**  
-- **Date d'édition du RI :** {date_edition_ri}  
-- **Date d'aujourd'hui :** {date_aujourdhui}  
-- **Validité du RI :** {"Valide" if ri_valide else "Périmé"}  
-
-
+---
 ---
 ### **Historique des conversations :**  
 {history_str}  
