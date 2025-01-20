@@ -1131,7 +1131,7 @@ Tableau récapitulatif des CRM
 Assureur	Date d'échéance/application	CRM	Date d'aujourd'hui (20/01/2025)
 GMF (RI 2)	10/10/2023	1,00	20/01/2025
 Assurance Directe (RI 1)	14/10/2024	0,95	20/01/2025
-"Le CRM à la date d'aujourd'hui  **({date_aujourdhui}) est de 0.85. Ce calcul est basé sur les informations disponibles dans le relevé d'information (RI) et ne nécessite pas d'ajustement supplémentaire."
+"Le CRM à la date d'aujourd'hui  **({date_aujourdhui}) est de 0.95. Ce calcul est basé sur les informations disponibles dans le relevé d'information (RI) et ne nécessite pas d'ajustement supplémentaire."
 
 
 
