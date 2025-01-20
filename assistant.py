@@ -11,7 +11,7 @@ from google.generativeai import GenerativeModel, configure
 from google.api_core.exceptions import GoogleAPIError
 import boto3  # Pour Amazon Textract
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime  # Ajout pour la gestion des dates
+from datetime import datetime
 
 # Configuration de la journalisation
 logging.basicConfig(filename="app.log", level=logging.INFO, format="%(asctime)s - %(message)s")
