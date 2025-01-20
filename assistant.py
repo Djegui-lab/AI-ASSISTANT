@@ -169,23 +169,8 @@ def calculate_crm_update(ri_date, crm_value):
     else:
         return f"✅ Le CRM de {crm_value} est à jour (émis le {ri_date.strftime('%d/%m/%Y')})."
 
-
-def extraire_date_edition_ri(client_docs_text):
-    """
-    Extrait la date d'édition du Relevé d'Information (RI) à partir des documents clients.
-    Retourne la date sous forme de chaîne de caractères (format "dd/mm/yyyy") ou None si non trouvée.
-    """
-    # Expression régulière pour rechercher une date au format "dd/mm/yyyy"
-    date_pattern = r"\b(\d{2}/\d{2}/\d{4})\b"
-    match = re.search(date_pattern, client_docs_text)
-    
-    if match:
-        return match.group(1)  # Retourne la date trouvée
-    else:
-        return None  # Aucune date trouvée
-
 # Interroger Gemini avec l'historique des interactions
-def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="ghemini-2.0-flash-exp"):
+def query_gemini_with_history(docs_text, client_docs_text, user_question, history, model="gemini-2.0-flash-exp"):
     """Interroge Gemini avec l'historique des interactions."""
     try:
         # Convertir l'historique en une chaîne de caractères
