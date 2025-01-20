@@ -1255,6 +1255,8 @@ def process_file(uploaded_file):
     except Exception as e:
         return f"Erreur lors du traitement du fichier {uploaded_file.name} : {e}"
         
+import streamlit as st
+
 def main():
     """Fonction principale pour l'interface utilisateur."""
     st.markdown(
@@ -1271,21 +1273,12 @@ def main():
             font-weight: bold;
             color: white;
             margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-        .centered-title:hover {
-            color: #f0f0f0;
-            transform: scale(1.02);
         }
         .centered-text {
             text-align: center;
             font-size: 18px;
             color: #4CAF50;
             margin-bottom: 30px;
-            transition: all 0.3s ease;
-        }
-        .centered-text:hover {
-            color: #45a049;
         }
         .stButton button {
             background-color: #4CAF50;
@@ -1295,20 +1288,12 @@ def main():
             font-size: 16px;
             font-weight: bold;
             border: none;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stButton button:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
         .stTextInput input {
             border-radius: 12px;
             padding: 12px;
             border: 1px solid #ccc;
             font-size: 16px;
-            transition: all 0.3s ease;
             background-color: rgba(255, 255, 255, 0.1);
             color: black;
         }
@@ -1319,39 +1304,13 @@ def main():
             background-color: rgba(255, 255, 255, 0.2);
             color: black;
         }
-        .stSuccess {
-            background-color: rgba(212, 237, 218, 0.2);
-            color: #d4edda;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #c3e6cb;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stError {
-            background-color: rgba(248, 215, 218, 0.2);
-            color: #f8d7da;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #f5c6cb;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-
-
-    initialize_session_state()
-    authorized_emails = load_authorized_emails()
-
-    if not st.session_state.logged_in:
-        st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
 
         tab1, tab2 = st.tabs(["Connexion", "Inscription"])
         with tab1:
