@@ -1312,7 +1312,7 @@ def main():
     st.markdown('<h1 class="centered-title">COURTIER-ASSISTANT</h1>', unsafe_allow_html=True)
     st.markdown('<p class="centered-text">Connectez-vous ou inscrivez-vous pour accéder au contenu.</p>', unsafe_allow_html=True)
 
-        tab1, tab2 = st.tabs(["Connexion", "Inscription"])
+    tab1, tab2 = st.tabs(["Connexion", "Inscription"])
         with tab1:
             st.subheader("Connexion")
             email = st.text_input("Email", key="login_email")
